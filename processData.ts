@@ -1,11 +1,11 @@
 import { readFileSync, writeFileSync, writeFile } from 'fs';
-import {Table} from 'apache-arrow';
+import {Table, Null} from 'apache-arrow';
 // import axios from 'axios';
 import fetch from 'node-fetch';
 import * as moment from 'moment';
 
 const dataUrl = "https://raw.githubusercontent.com/RandomFractals/ChicagoCrimes/master/data/2018/chicago-crimes-2018.arrow";
-const newFile = "C:\\Users\\Todd Hay\\Desktop\\data.arrow";
+const newFile = "C:\\Users\\Todd.Hay\\Desktop\\data.arrow";
 
 async function retrieveData() {
     try {
@@ -28,21 +28,35 @@ async function retrieveData() {
         console.log('Error: ' + err.message);
     }
 }
-const start = moment().format();
-const data = Table.from(readFileSync(newFile));
-const end = moment().format();
-console.log('time to load: ' + (end - start));
-const rowCount = data.count();
-console.log(data.get(0).toJSON());
-console.log(data.get(0).toString());
-console.log(data.get(rowCount-1).toJSON())
-console.log('rows = ' + data.count());
+
+let data = null;
+const localFile = true;
+if (localFile) {
+    let start = moment();
+    let data = Table.from(readFileSync(newFile));
+    let end = moment();
+    let duration = moment.duration(end.diff(start));
+    console.log('time to load: ' + duration.asSeconds() + 's');
+
+    start = moment();
+    console.log('rows = ' + data.count());
+    end = moment();
+    duration = moment.duration(end.diff(start));
+    console.log('time to count: ' + duration.asSeconds() + 's');
+
+    const rowCount = data.count();
+    console.log(data.get(0).toJSON());
+    console.log(data.get(0).toString());
+    console.log(data.get(rowCount-1).toJSON())
+        
+} else {
+    let data = retrieveData();
+    // console.log(data.toString());
+}
+// console.log('time to load: ' + (end - start));
 
 
-// const data = retrieveData();
-// console.log(data.toString());
-
-let x: number = 10;
-let y: number = 20;
+// let x: number = 10;
+// let y: number = 20;
 // console.log(x + y);
 
