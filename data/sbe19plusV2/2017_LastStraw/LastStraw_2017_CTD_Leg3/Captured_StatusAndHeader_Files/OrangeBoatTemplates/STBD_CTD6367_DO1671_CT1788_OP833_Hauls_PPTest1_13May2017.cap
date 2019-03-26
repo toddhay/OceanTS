@@ -1,0 +1,25 @@
+SBE 19plus
+S>
+<Executed/>*ds
+SCP19, 6367, 2.5.2, 1767, 1, 20, N
+<Executed/>
+<Executed/>ds
+SBE 19plus V 2.5.2  SERIAL NO. 6367    13 May 2017 11:32:20
+vbatt = 13.5, vlith =  8.2, ioper =  61.8 ma, ipump =  93.4 ma, 
+iext01 =   6.2 ma, iext2345 =  23.8 ma, iserial =  43.6 ma
+status = not logging
+number of scans to average = 1
+samples = 1767, free = 3288140, casts = 1
+mode = profile, minimum cond freq = 10, pump delay = 10 sec
+autorun = no, ignore magnetic switch = no
+battery type = alkaline, battery cutoff =  7.5 volts
+pressure sensor = strain gauge, range = 2900.0
+SBE 38 = no, WETLABS = no, OPTODE = yes, SBE63 = no, Gas Tension Device = no
+Ext Volt 0 = yes, Ext Volt 1 = no
+Ext Volt 2 = yes, Ext Volt 3 = yes
+Ext Volt 4 = no, Ext Volt 5 = no
+echo characters = yes
+output format = raw HEX
+<Executed/>dh
+cast   1 13 May 2017 11:07:09 samples 1 to 1767, avg = 1, stop = mag switch
+<Executed/>

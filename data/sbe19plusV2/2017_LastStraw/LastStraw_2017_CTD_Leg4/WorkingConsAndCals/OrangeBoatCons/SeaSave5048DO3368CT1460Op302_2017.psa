@@ -1,0 +1,709 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SeasaveProgramSetup >
+  <SoftwareVersion value="7.22.5" />
+  <Settings >
+    <StatusWindowIsVisible value="0" />
+    <MaximizedPlotMayCoverSeasave value="0" />
+    <CheckScanLength value="1" />
+    <CompareSerialNumbers value="1" />
+    <ConfirmInstrumentConfigurationChange value="1" />
+    <ConfirmProgramSetupChange value="1" />
+    <ConfirmDisplaySetupChange value="1" />
+    <OverwriteOutputFileWarning value="1" />
+    <ArchiveData value="1" />
+    <DelayWrite value="0" />
+    <EnablePumpControl value="0" />
+    <NMEA_PC_SerialPort value="4" />
+    <NMEA_PC_BaudRate value="4800" />
+    <ResetDeckUnitToState1 value="1" />
+    <RemoteBottleFireCommandPort value="49167" />
+    <RemoteBottleFireStatusPort value="49168" />
+    <RemoteRawDataPort value="49160" />
+    <RemoteProcessedDataPort value="49161" />
+    <InstrumentPortConfiguration >
+      <BaudRate value="9600" />
+      <Port value="0" />
+      <DataBits value="8" />
+      <StopBits value="1" />
+      <Parity value="78" />
+    </InstrumentPortConfiguration>
+    <HeaderForm HeaderChoice="1" />
+    <ArchivedDataPlaybackSettings >
+      <PlaybackFilePath value="C:\2017_CTD_DataFiles\Excalibur_CTD_2017\Excalibur_2017_CTD_Leg1\SeabirdOps\PORT_CTD5048_DO3358CT1460Op302_Hauls_PPTest1_13May2017.hex" />
+      <EnableSelectedOutputs value="0" />
+      <NumberOfScansToSkipOverAtStart value="0" />
+      <NumberOfScansToSkipBetweenComputations value="0" />
+      <SecondsBetweenComputations value="0.000000" />
+      <ReadToEndOfFile value="1" />
+      <NumberOfScansToRead value="0" />
+    </ArchivedDataPlaybackSettings>
+    <MiscellaneousCalcData >
+      <Latitude value="0.000000" />
+      <Longitude value="0.000000" />
+      <DescentRateAndAcceleration >
+        <WindowSize value="2.000000" />
+      </DescentRateAndAcceleration>
+      <Oxygen >
+        <WindowSize value="2.000000" />
+        <ApplyHysteresisCorrection value="1" />
+        <ApplyTauCorrection value="1" />
+      </Oxygen>
+      <AverageSoundVelocity >
+        <MinimumPressure value="20.000000" />
+        <MinimumSalinity value="20.000000" />
+        <PressureWindowSize value="20.000000" />
+        <TimeWindowSize value="60.000000" />
+      </AverageSoundVelocity>
+      <PlumeAnomaly >
+        <ThetaB value="0.000000" />
+        <SalinityB value="0.000000" />
+        <ThetaZSalinityZRatio value="0.000000" />
+        <ReferencePressure value="0.000000" />
+      </PlumeAnomaly>
+      <PotentialTempAnomaly >
+        <A0 value="0.000000" />
+        <A1 value="0.000000" />
+        <A1Multiplier value="0" />
+      </PotentialTempAnomaly>
+    </MiscellaneousCalcData>
+    <ConfigurationFilePath value="C:\2017_CTD_DataFiles\Excalibur_CTD_2017\Excalibur_2017_CTD_Leg1\WorkingConsAndCals\2_CTD5048_For2017_DO3358CT1460Op302.xmlcon" />
+    <DataFilePath value="&lt;none selected&gt;" />
+    <WaterSamplerConfiguration Type="0" Port="1" NumberOfWaterBottles="12" FiringSequence="0" EnableRemoteFiring="0" BeepUsesInternalSpeakers="0" GO1016ArmOffset="0" >
+      <PositionsForTableDrivenFiring >
+        <TableEntry BottleNumber="0" Position="1" />
+        <TableEntry BottleNumber="1" Position="2" />
+        <TableEntry BottleNumber="2" Position="3" />
+        <TableEntry BottleNumber="3" Position="4" />
+        <TableEntry BottleNumber="4" Position="5" />
+        <TableEntry BottleNumber="5" Position="6" />
+        <TableEntry BottleNumber="6" Position="7" />
+        <TableEntry BottleNumber="7" Position="8" />
+        <TableEntry BottleNumber="8" Position="9" />
+        <TableEntry BottleNumber="9" Position="10" />
+        <TableEntry BottleNumber="10" Position="11" />
+        <TableEntry BottleNumber="11" Position="12" />
+        <TableEntry BottleNumber="12" Position="13" />
+        <TableEntry BottleNumber="13" Position="14" />
+        <TableEntry BottleNumber="14" Position="15" />
+        <TableEntry BottleNumber="15" Position="16" />
+        <TableEntry BottleNumber="16" Position="17" />
+        <TableEntry BottleNumber="17" Position="18" />
+        <TableEntry BottleNumber="18" Position="19" />
+        <TableEntry BottleNumber="19" Position="20" />
+        <TableEntry BottleNumber="20" Position="21" />
+        <TableEntry BottleNumber="21" Position="22" />
+        <TableEntry BottleNumber="22" Position="23" />
+        <TableEntry BottleNumber="23" Position="24" />
+        <TableEntry BottleNumber="24" Position="25" />
+        <TableEntry BottleNumber="25" Position="26" />
+        <TableEntry BottleNumber="26" Position="27" />
+        <TableEntry BottleNumber="27" Position="28" />
+        <TableEntry BottleNumber="28" Position="29" />
+        <TableEntry BottleNumber="29" Position="30" />
+        <TableEntry BottleNumber="30" Position="31" />
+        <TableEntry BottleNumber="31" Position="32" />
+        <TableEntry BottleNumber="32" Position="33" />
+        <TableEntry BottleNumber="33" Position="34" />
+        <TableEntry BottleNumber="34" Position="35" />
+        <TableEntry BottleNumber="35" Position="36" />
+      </PositionsForTableDrivenFiring>
+      <AutoFireData UsePressure="1" DepthType="0" MaxPressureOrDepth="0.000000" MinPressureDepth="0.000000" AllowManualFiring="0" >
+        <DataTable >
+          <Row index="0" BottleNumber="1" FireAt="0.000000" />
+          <Row index="1" BottleNumber="2" FireAt="0.000000" />
+          <Row index="2" BottleNumber="3" FireAt="0.000000" />
+          <Row index="3" BottleNumber="4" FireAt="0.000000" />
+          <Row index="4" BottleNumber="5" FireAt="0.000000" />
+          <Row index="5" BottleNumber="6" FireAt="0.000000" />
+          <Row index="6" BottleNumber="7" FireAt="0.000000" />
+          <Row index="7" BottleNumber="8" FireAt="0.000000" />
+          <Row index="8" BottleNumber="9" FireAt="0.000000" />
+          <Row index="9" BottleNumber="10" FireAt="0.000000" />
+          <Row index="10" BottleNumber="11" FireAt="0.000000" />
+          <Row index="11" BottleNumber="12" FireAt="0.000000" />
+          <Row index="12" BottleNumber="13" FireAt="0.000000" />
+          <Row index="13" BottleNumber="14" FireAt="0.000000" />
+          <Row index="14" BottleNumber="15" FireAt="0.000000" />
+          <Row index="15" BottleNumber="16" FireAt="0.000000" />
+          <Row index="16" BottleNumber="17" FireAt="0.000000" />
+          <Row index="17" BottleNumber="18" FireAt="0.000000" />
+          <Row index="18" BottleNumber="19" FireAt="0.000000" />
+          <Row index="19" BottleNumber="20" FireAt="0.000000" />
+          <Row index="20" BottleNumber="21" FireAt="0.000000" />
+          <Row index="21" BottleNumber="22" FireAt="0.000000" />
+          <Row index="22" BottleNumber="23" FireAt="0.000000" />
+          <Row index="23" BottleNumber="24" FireAt="0.000000" />
+          <Row index="24" BottleNumber="25" FireAt="0.000000" />
+          <Row index="25" BottleNumber="26" FireAt="0.000000" />
+          <Row index="26" BottleNumber="27" FireAt="0.000000" />
+          <Row index="27" BottleNumber="28" FireAt="0.000000" />
+          <Row index="28" BottleNumber="29" FireAt="0.000000" />
+          <Row index="29" BottleNumber="30" FireAt="0.000000" />
+          <Row index="30" BottleNumber="31" FireAt="0.000000" />
+          <Row index="31" BottleNumber="32" FireAt="0.000000" />
+          <Row index="32" BottleNumber="33" FireAt="0.000000" />
+          <Row index="33" BottleNumber="34" FireAt="0.000000" />
+          <Row index="34" BottleNumber="35" FireAt="0.000000" />
+          <Row index="35" BottleNumber="36" FireAt="0.000000" />
+        </DataTable>
+      </AutoFireData>
+    </WaterSamplerConfiguration>
+    <NMEAConfiguration AppendToEveryScan="0" AddToNavFileWhenCtrlF7IsPressed="0" />
+    <TimeoutParameters SecondsAtStartup="60" SecondsBetweenScans="20" />
+    <SeasaveAcqCommunications DataPort="49163" StatusPort="49165" CommandPort="49164" />
+    <MainWindowPosition left="-9" top="-9" right="1369" bottom="743" />
+    <SetupFilePath value="C:\2017_CTD_DataFiles\Excalibur_CTD_2017\Excalibur_2017_CTD_Leg1\WorkingConsAndCals\SeaSave5048DO3368CT1460Op302_2017.psa" />
+  </Settings>
+  <Clients >
+    <DisplaySettings Size="2" >
+      <Display index="0" Type="4" >
+        <XYPlotData >
+          <PlotType value="1" />
+          <NumberOfAxes value="5" />
+          <Title value="Depth, Temperature, DO SBE43, DO AadI" />
+          <TitleColor value="0" />
+          <FontSize value="2" />
+          <Font value="Arial" />
+          <GridLinePlacement value="0" />
+          <GridStyle value="0" />
+          <GridColor value="0" />
+          <GridInFront value="0" />
+          <InsideBackgroundColor value="16777215" />
+          <OutsideBackgroundColor value="16777215" />
+          <ShowFireSequence value="0" />
+          <ShowBottleFireLines value="0" />
+          <BottleFireLineLabelType value="0" />
+          <BottleFireLineType value="0" />
+          <BottleFireLineColor value="0" />
+          <DisplayDowncastOnly value="0" />
+          <AutoPageSingleAxis value="0" />
+          <ShowMarkLines value="0" />
+          <MarkLineStyle value="0" />
+          <MarkLineLabelType value="0" />
+          <MarkLineColor value="0" />
+          <QueueSizeLimit value="10" />
+          <RedrawBufferSize value="64000" />
+          <MonochromePlot value="0" />
+          <ShowPlotShadow value="0" />
+          <BlackTextAxes value="0" />
+          <EnableUpcastLineColors value="0" />
+          <PlotOffScaleData value="0" />
+          <MinimumPressureToEnableUpcastColors value="0.000000" />
+          <PressureDecreaseToEnableUpcastColors value="0.000000" />
+          <NumberOfSecondsBetweenPlotUpdates value="1.000000" />
+          <ResolutionForRedraw value="0.000833" />
+          <ShowToolBar value="1" />
+          <AutoPagePercent value="100" />
+          <WindowPlacement >
+            <length value="44" />
+            <flags value="0" />
+            <showCmd value="1" />
+            <ptMinPosition x="-1" y="-1" />
+            <ptMaxPosition x="-1" y="-1" />
+            <rcNormalPosition left="597" top="56" right="1366" bottom="735" />
+          </WindowPlacement>
+          <Axes >
+            <Axis index="0" >
+              <CalcID value="84" />
+              <Calc UnitID="39" Ordinal="0" >
+                <FullName value="Time, Elapsed [minutes]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="0" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="400.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="0" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="0" />
+            </Axis>
+            <Axis index="1" >
+              <CalcID value="55" />
+              <Calc UnitID="40" Ordinal="0" >
+                <FullName value="Oxygen, SBE 43 [ml/l]" />
+                <WindowSize value="2.000000" />
+                <ApplyHysteresisCorrection value="1" />
+                <ApplyTauCorrection value="1" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="255" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="8.000000" />
+              <MajorDivisions value="4" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="2" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="255" />
+            </Axis>
+            <Axis index="2" >
+              <CalcID value="128" />
+              <Calc UnitID="40" Ordinal="0" >
+                <FullName value="Oxygen Optode, Aanderaa [ml/l]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="16711935" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="8.000000" />
+              <MajorDivisions value="4" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="2" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="16711935" />
+            </Axis>
+            <Axis index="3" >
+              <CalcID value="97" />
+              <Calc UnitID="6" Ordinal="0" >
+                <FullName value="Temperature [ITS-90, deg C]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="16711680" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="20.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="1" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="16711680" />
+            </Axis>
+            <Axis index="4" >
+              <CalcID value="17" />
+              <Calc UnitID="31" Ordinal="0" >
+                <FullName value="Depth [salt water, m]" />
+                <Latitude value="0.000000" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="0" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="1500.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="1" />
+              <DecimalDigits value="0" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="0" />
+            </Axis>
+          </Axes>
+          <WindowRectangle left="597" top="56" right="1366" bottom="735" />
+          <GraphicsOutputOptions >
+            <PrintSizeFrom value="0" />
+            <PrintOptionsView >
+              <Orientation value="0" />
+              <PrintFullPage value="1" />
+              <PrintBlackAndWhite value="0" />
+              <OutputUnits value="0" />
+              <OutputWidth value="184.000000" />
+              <OutputHeight value="115.000000" />
+            </PrintOptionsView>
+            <FileOptionsView >
+              <DataFormat value="0" />
+              <MetafileSizeFrom value="0" />
+              <JpegSizeFrom value="0" />
+              <BitmapSizeFrom value="0" />
+              <MetafileView >
+                <OutputUnits value="0" />
+                <OutputWidth value="184.000000" />
+                <OutputHeight value="115.000000" />
+              </MetafileView>
+              <JpegView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </JpegView>
+              <BitmapView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </BitmapView>
+            </FileOptionsView>
+            <ClipOptionsView >
+              <DataFormat value="0" />
+              <MetafileSizeFrom value="0" />
+              <JpegSizeFrom value="0" />
+              <BitmapSizeFrom value="0" />
+              <MetafileView >
+                <OutputUnits value="0" />
+                <OutputWidth value="184.000000" />
+                <OutputHeight value="115.000000" />
+              </MetafileView>
+              <JpegView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </JpegView>
+              <BitmapView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </BitmapView>
+            </ClipOptionsView>
+            <CopyToClipboardDefault value="0" />
+            <SaveToFileDefault value="1" />
+            <DisplaySelectClipboardFormatDialog value="0" />
+          </GraphicsOutputOptions>
+          <TS_PlotSetup >
+            <ContourVariable value="0" />
+            <Start value="0.000000" />
+            <Interval value="1.000000" />
+            <SigDigits value="2" />
+            <PointsPerLine value="40" />
+            <LabelPositionPct value="5.000000" />
+            <LabelSize value="8" />
+            <LineType value="0" />
+            <Color value="8388608" />
+          </TS_PlotSetup>
+        </XYPlotData>
+      </Display>
+      <Display index="1" Type="4" >
+        <XYPlotData >
+          <PlotType value="1" />
+          <NumberOfAxes value="5" />
+          <Title value="Chlorphyll, Turbidity and Salinity (PSU)" />
+          <TitleColor value="0" />
+          <FontSize value="2" />
+          <Font value="Arial" />
+          <GridLinePlacement value="0" />
+          <GridStyle value="0" />
+          <GridColor value="0" />
+          <GridInFront value="0" />
+          <InsideBackgroundColor value="16777215" />
+          <OutsideBackgroundColor value="16777215" />
+          <ShowFireSequence value="0" />
+          <ShowBottleFireLines value="0" />
+          <BottleFireLineLabelType value="0" />
+          <BottleFireLineType value="0" />
+          <BottleFireLineColor value="0" />
+          <DisplayDowncastOnly value="0" />
+          <AutoPageSingleAxis value="0" />
+          <ShowMarkLines value="0" />
+          <MarkLineStyle value="0" />
+          <MarkLineLabelType value="0" />
+          <MarkLineColor value="0" />
+          <QueueSizeLimit value="10" />
+          <RedrawBufferSize value="64000" />
+          <MonochromePlot value="0" />
+          <ShowPlotShadow value="0" />
+          <BlackTextAxes value="0" />
+          <EnableUpcastLineColors value="0" />
+          <PlotOffScaleData value="0" />
+          <MinimumPressureToEnableUpcastColors value="0.000000" />
+          <PressureDecreaseToEnableUpcastColors value="0.000000" />
+          <NumberOfSecondsBetweenPlotUpdates value="1.000000" />
+          <ResolutionForRedraw value="0.000833" />
+          <ShowToolBar value="1" />
+          <AutoPagePercent value="100" />
+          <WindowPlacement >
+            <length value="44" />
+            <flags value="0" />
+            <showCmd value="1" />
+            <ptMinPosition x="-1" y="-1" />
+            <ptMaxPosition x="-1" y="-1" />
+            <rcNormalPosition left="3" top="54" right="590" bottom="728" />
+          </WindowPlacement>
+          <Axes >
+            <Axis index="0" >
+              <CalcID value="84" />
+              <Calc UnitID="39" Ordinal="0" >
+                <FullName value="Time, Elapsed [minutes]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="0" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="400.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="0" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="0" />
+            </Axis>
+            <Axis index="1" >
+              <CalcID value="93" />
+              <Calc UnitID="38" Ordinal="0" >
+                <FullName value="Fluorescence, WET Labs ECO-AFL/FL [mg/m^3]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="65280" />
+              <ScaleType value="0" />
+              <MinimumValue value="-1.000000" />
+              <MaximumValue value="9.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="2" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="65280" />
+            </Axis>
+            <Axis index="2" >
+              <CalcID value="70" />
+              <Calc UnitID="49" Ordinal="0" >
+                <FullName value="Salinity, Practical [PSU]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="33023" />
+              <ScaleType value="0" />
+              <MinimumValue value="30.000000" />
+              <MaximumValue value="35.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="2" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="33023" />
+            </Axis>
+            <Axis index="3" >
+              <CalcID value="150" />
+              <Calc UnitID="45" Ordinal="0" >
+                <FullName value="Turbidity, WET Labs ECO [NTU]" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="16512" />
+              <ScaleType value="0" />
+              <MinimumValue value="-2.000000" />
+              <MaximumValue value="6.000000" />
+              <MajorDivisions value="4" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="2" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="16512" />
+            </Axis>
+            <Axis index="4" >
+              <CalcID value="17" />
+              <Calc UnitID="31" Ordinal="0" >
+                <FullName value="Depth [salt water, m]" />
+                <Latitude value="0.000000" />
+              </Calc>
+              <LabelAxisWithVariable value="1" />
+              <CustomLabel value="" />
+              <LineType value="0" />
+              <AxisColor value="0" />
+              <ScaleType value="0" />
+              <MinimumValue value="0.000000" />
+              <MaximumValue value="1000.000000" />
+              <MajorDivisions value="5" />
+              <MinorDivisions value="5" />
+              <ReverseScaleDirection value="0" />
+              <DecimalDigits value="0" />
+              <AutoPageThisAxis value="0" />
+              <UpcastLineColor value="0" />
+              <DowncastLineColor value="0" />
+            </Axis>
+          </Axes>
+          <WindowRectangle left="3" top="54" right="590" bottom="728" />
+          <GraphicsOutputOptions >
+            <PrintSizeFrom value="0" />
+            <PrintOptionsView >
+              <Orientation value="0" />
+              <PrintFullPage value="1" />
+              <PrintBlackAndWhite value="0" />
+              <OutputUnits value="0" />
+              <OutputWidth value="184.000000" />
+              <OutputHeight value="115.000000" />
+            </PrintOptionsView>
+            <FileOptionsView >
+              <DataFormat value="0" />
+              <MetafileSizeFrom value="0" />
+              <JpegSizeFrom value="0" />
+              <BitmapSizeFrom value="0" />
+              <MetafileView >
+                <OutputUnits value="0" />
+                <OutputWidth value="184.000000" />
+                <OutputHeight value="115.000000" />
+              </MetafileView>
+              <JpegView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </JpegView>
+              <BitmapView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </BitmapView>
+            </FileOptionsView>
+            <ClipOptionsView >
+              <DataFormat value="0" />
+              <MetafileSizeFrom value="0" />
+              <JpegSizeFrom value="0" />
+              <BitmapSizeFrom value="0" />
+              <MetafileView >
+                <OutputUnits value="0" />
+                <OutputWidth value="184.000000" />
+                <OutputHeight value="115.000000" />
+              </MetafileView>
+              <JpegView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </JpegView>
+              <BitmapView >
+                <OutputWidth value="840" />
+                <OutputHeight value="525" />
+              </BitmapView>
+            </ClipOptionsView>
+            <CopyToClipboardDefault value="0" />
+            <SaveToFileDefault value="1" />
+            <DisplaySelectClipboardFormatDialog value="0" />
+          </GraphicsOutputOptions>
+          <TS_PlotSetup >
+            <ContourVariable value="0" />
+            <Start value="0.000000" />
+            <Interval value="1.000000" />
+            <SigDigits value="2" />
+            <PointsPerLine value="40" />
+            <LabelPositionPct value="5.000000" />
+            <LabelSize value="8" />
+            <LineType value="0" />
+            <Color value="8388608" />
+          </TS_PlotSetup>
+        </XYPlotData>
+      </Display>
+    </DisplaySettings>
+    <AsciiOutSettings >
+      <SerialOutputData >
+        <SerialPortConfig >
+          <BaudRate value="9600" />
+          <Port value="2" />
+          <DataBits value="8" />
+          <StopBits value="1" />
+          <Parity value="78" />
+        </SerialPortConfig>
+        <EnableSerialPortOutput value="0" />
+        <FormatXML value="0" />
+        <SecondsBetweenUpdates value="0.000000" />
+        <ArrayOfVariables Size="0" />
+      </SerialOutputData>
+      <MarkVariablesOutputData >
+        <ArrayOfVariables Size="0" />
+      </MarkVariablesOutputData>
+      <WindowsSocketOutputData >
+        <OutputRawDataToSocket value="0" />
+        <PublishSettingsForRawData value="0" />
+        <SecondsBetweenRawDataUpdates value="0.000000" />
+        <OutputConvertedDataToSocket value="0" />
+        <FormatXML value="0" />
+        <SecondsBetweenUpdates value="0.000000" />
+        <ArrayOfVariables Size="0" />
+      </WindowsSocketOutputData>
+      <SharedFileOutputData >
+        <File value="" />
+        <EnableSharedFileOutput value="0" />
+        <FormatXML value="0" />
+        <SecondsBetweenUpdates value="0.000000" />
+        <ArrayOfVariables Size="0" />
+      </SharedFileOutputData>
+    </AsciiOutSettings>
+    <SBE11AlarmSettings >
+      <AltimeterAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+        <Hysteresis value="0.000000" />
+        <MinimumPressureToEnable value="0.000000" />
+      </AltimeterAlarm>
+      <MinimumPressureAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+      </MinimumPressureAlarm>
+      <MaxiumuPressureAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+      </MaxiumuPressureAlarm>
+      <BottomContactSwitchAlarm >
+        <Enable value="0" />
+      </BottomContactSwitchAlarm>
+    </SBE11AlarmSettings>
+    <RemoteDisplaySettings >
+      <EnableRemoteDisplay value="0" />
+      <ComPort value="3" />
+      <SecondsBetweenUpdates value="0.000000" />
+      <RemoteDisplayDataType value="0" />
+      <DepthType value="0" />
+      <AlarmSettings >
+        <AltimeterAlarm >
+          <Enable value="0" />
+          <SetPoint value="0.000000" />
+          <Hysteresis value="0.000000" />
+          <MinimumPressureToEnable value="0.000000" />
+        </AltimeterAlarm>
+        <MinimumPressureAlarm >
+          <Enable value="0" />
+          <SetPoint value="0.000000" />
+        </MinimumPressureAlarm>
+        <MaxiumuPressureAlarm >
+          <Enable value="0" />
+          <SetPoint value="0.000000" />
+        </MaxiumuPressureAlarm>
+        <BottomContactSwitchAlarm >
+          <Enable value="0" />
+        </BottomContactSwitchAlarm>
+      </AlarmSettings>
+    </RemoteDisplaySettings>
+    <PC_AlarmSettings >
+      <UseInternalSpeaker value="0" />
+      <AltimeterAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+        <Hysteresis value="0.000000" />
+        <MinimumPressureToEnable value="0.000000" />
+      </AltimeterAlarm>
+      <MinimumPressureAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+      </MinimumPressureAlarm>
+      <MaxiumuPressureAlarm >
+        <Enable value="0" />
+        <SetPoint value="0.000000" />
+      </MaxiumuPressureAlarm>
+      <BottomContactSwitchAlarm >
+        <Enable value="0" />
+      </BottomContactSwitchAlarm>
+    </PC_AlarmSettings>
+    <AlarmDisplayDialogPosition >
+      <Rectangle left="2" top="47" right="128" bottom="164" />
+      <Visible value="0" />
+    </AlarmDisplayDialogPosition>
+    <FireBottleDialogPosition >
+      <Rectangle left="0" top="0" right="0" bottom="0" />
+      <Visible value="0" />
+    </FireBottleDialogPosition>
+    <MarkScanDialogPosition >
+      <Rectangle left="0" top="0" right="0" bottom="0" />
+      <Visible value="0" />
+    </MarkScanDialogPosition>
+    <NMEA_DialogPosition >
+      <Rectangle left="0" top="0" right="0" bottom="0" />
+      <Visible value="0" />
+    </NMEA_DialogPosition>
+  </Clients>
+</SeasaveProgramSetup>

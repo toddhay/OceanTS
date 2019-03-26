@@ -34,21 +34,25 @@ const localFile = true;
 if (localFile) {
     let start = moment();
     let data = Table.from(readFileSync(newFile));
-    let end = moment();
-    let duration = moment.duration(end.diff(start));
-    console.log('time to load: ' + duration.asSeconds() + 's');
 
-    start = moment();
+    // start = moment();
     console.log('rows = ' + data.count());
-    end = moment();
-    duration = moment.duration(end.diff(start));
-    console.log('time to count: ' + duration.asSeconds() + 's');
+    // end = moment();
+    // duration = moment.duration(end.diff(start));
+    // console.log('time to count: ' + duration.asSeconds() + 's');
 
     const rowCount = data.count();
     console.log(data.get(0).toJSON());
     console.log(data.get(0).toString());
-    console.log(data.get(rowCount-1).toJSON())
-        
+    console.log(data.get(rowCount-1).toJSON());
+
+    let fields = data.schema.fields.map(f => f.name);
+    console.info('fields: ' + fields);
+
+    let end = moment();
+    let duration = moment.duration(end.diff(start));
+    console.log('time to load: ' + duration.asSeconds() + 's');
+
 } else {
     let data = retrieveData();
     // console.log(data.toString());

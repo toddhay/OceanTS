@@ -1,0 +1,19 @@
+
+S>ds
+SBE 19plus V 2.5.2  SERIAL NO. 6368    25 May 2017 11:00:21
+vbatt = 10.8, vlith =  7.9, ioper =  61.4 ma, ipump =  49.5 ma, 
+iext01 =   6.0 ma, iext2345 =  34.9 ma, iserial =  49.6 ma
+status = not logging
+number of scans to average = 1
+samples = 6877, free = 3283030, casts = 1
+mode = profile, minimum cond freq = 3050, pump delay = 180 sec
+autorun = no, ignore magnetic switch = no
+battery type = alkaline, battery cutoff =  7.5 volts
+pressure sensor = strain gauge, range = 2900.0
+SBE 38 = no, WETLABS = no, OPTODE = yes, SBE63 = no, Gas Tension Device = no
+Ext Volt 0 = yes, Ext Volt 1 = no
+Ext Volt 2 = yes, Ext Volt 3 = yes
+Ext Volt 4 = no, Ext Volt 5 = no
+echo characters = yes
+output format = raw HEX
+S>
