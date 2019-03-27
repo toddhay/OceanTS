@@ -3,6 +3,7 @@ import { createInterface } from 'readline';
 import {Table, Null} from 'apache-arrow';
 import fetch from 'node-fetch';
 import * as moment from 'moment';
+import * as math from 'mathjs';
 
 const line_counter = ((i = 0) => () => ++i)();
 
@@ -20,13 +21,16 @@ let subparts: any = null;
 let sensors = {};
 let extraSensors = {};
 let voltages = {};
+let casts = {};
 let currentChar = -1;
 let t: number, c: number, p: number, ptcv: number = null, oxygen: number,
     oxygenPhase: number, oxygenTempVoltage: number, gtdPressure: number, gtdTemp: number;
 let voltage0: number, voltage1:number, voltage2: number, 
     voltage3: number, voltage4:number, voltage5: number;
+let cleanLine: string, castNum: string, castStartDate: string,
+    castStartEnd: any, castStartNum: number, castEndNum: number;
 
-const parsing = [
+const parsingRules = [
     {"variable": "temperature", "size": 6, "operations": null},
     {"variable": "conductivity", "size": 6, "operations": null}
 ]
@@ -75,11 +79,31 @@ lineReader.on('line', (line, lineno = line_counter()) => {
         })
     }
 
+    if (line.startsWith("* cast")) {
+        // Parse casts
+        parts = line.replace("* cast", "").trim().split(",");
+        if (parts.length >= 1) {
+            subparts = parts[0].split("samples").map(s => s.trim());
+            castNum = subparts[0].split(" ")[0];
+            castStartDate = subparts[0].replace(castNum, "").trim();
+            castStartEnd = subparts[1].split("to").map(s => s.trim());
+            castStartNum = parseInt(castStartEnd[0]);
+            castEndNum = parseInt(castStartEnd[1]);
+            // console.info("cast, num=", castNum,  
+            //     castStartDate, castStartNum, castEndNum);
+            casts[castNum] = {
+                "startDate": castStartDate,
+                "startNum": castStartNum,
+                "endNum": castEndNum
+            }
+        }
+    }
+
     if (line.startsWith('*END*')) { 
         console.info('sensors: ' + JSON.stringify(sensors));
         console.info('extraSensors: ' + JSON.stringify(extraSensors));
         console.info('voltages: '+ JSON.stringify(voltages));
-
+        console.info('casts: ' + JSON.stringify(casts));
         dataStartLine = lineno + 1; 
         console.info('dataStartLine: ' + dataStartLine);
     }
@@ -157,6 +181,9 @@ lineReader.on('line', (line, lineno = line_counter()) => {
         }        
         if (extraSensors["OPTODE"]) {
             oxygen = parseInt(line.slice(currentChar, currentChar+6), 16) / 10000 - 10;
+            console.info('Oxygen', line.slice(currentChar, currentChar+6), 
+                parseInt(line.slice(currentChar, currentChar+6), 16), oxygen);
+
             currentChar += 6;
             msg += ' OPTODE=' + oxygen
         }

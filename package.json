@@ -9,8 +9,7 @@
   "scripts": {
     "del-dist": "lerna exec --parallel -- del-cli dist",
     "prebuild": "yarn del-dist",
-    "build": "lerna run build",
-    "run": "ts-node processHexFileTest.ts",
+    "build": "lerna run build"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -19,6 +18,7 @@
   },
   "dependencies": {
     "apache-arrow": "^0.4.1",
+    "mathjs": "^5.8.0",
     "moment": "^2.24.0",
     "node-fetch": "^2.3.0",
     "ts-node": "^8.0.3",
