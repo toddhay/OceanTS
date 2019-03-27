@@ -24,7 +24,7 @@ let currentChar = -1;
 let t: number, c: number, p: number, ptcv: number = null, oxygen: number,
     oxygenPhase: number, oxygenTempVoltage: number, gtdPressure: number, gtdTemp: number;
 let voltage0: number, voltage1:number, voltage2: number, 
-    voltage3: number, voltage4:number, voltage5: number = null;
+    voltage3: number, voltage4:number, voltage5: number;
 
 const parsing = [
     {"variable": "temperature", "size": 6, "operations": null},
@@ -34,7 +34,7 @@ let msg: string = null;
 
 lineReader.on('line', (line, lineno = line_counter()) => {
 
-    if ((lineno > dataStartLine+5) && (dataStartLine !== -1)) lineReader.close();
+    if ((lineno > dataStartLine+2) && (dataStartLine !== -1)) lineReader.close();
 
     if ((line.startsWith('* SBE 19plus V 2.5.2')) && (startDateTime === null)) {
         const lineParts = line.split("SERIAL NO.").map(s => s.trim());
@@ -104,38 +104,42 @@ lineReader.on('line', (line, lineno = line_counter()) => {
         // Dynamically Sized Data, need to check if the voltages/sensors exist
         // Todo - Fix so we don't hardcode in the character places to parse
         if (voltages["Ext Volt 0"]) { 
-            voltage0 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar += 6;
+            voltage0 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
+            console.info('Volt 0', line.slice(currentChar, currentChar+4), 
+                parseInt(line.slice(currentChar, currentChar+4), 16), voltage0);
             msg += ' Volt 0=' + voltage0
+            currentChar += 4;
         }
         if (voltages["Ext Volt 1"]) {
-            voltage1 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar +=6;
+            voltage1 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
             msg += ' Volt 1=' + voltage1
+            currentChar +=4;
         }
         if (voltages["Ext Volt 2"]) {
-            console.info('Volt 2', line.slice(currentChar, currentChar+6));
-            voltage2 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar +=6;
+            voltage2 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
+            console.info('Volt 2', line.slice(currentChar, currentChar+4),
+                parseInt(line.slice(currentChar, currentChar+4), 16), voltage2);
             msg += ' Volt 2=' + voltage2
+            currentChar +=4;
         }
         
         if (voltages["Ext Volt 3"]) {
-            console.info('Volt 3', line.slice(currentChar, currentChar+6));
-            voltage3 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar +=6;
+            voltage3 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
+            console.info('Volt 3', line.slice(currentChar, currentChar+4), 
+                parseInt(line.slice(currentChar, currentChar+4), 16), voltage3);
             msg += ' Volt 3=' + voltage3
+            currentChar +=4;
         }
         if (voltages["Ext Volt 4"]) {
-            voltage4 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar += 6;
+            voltage4 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
             msg += ' Volt 4=' + voltage4
+            currentChar += 4;
         }
         if (voltages["Ext Volt 5"]) {
-            console.info('Volt 5', line.slice(currentChar, currentChar+6));
-            voltage5 = parseInt(line.slice(currentChar, currentChar+6)) / 13107;
-            currentChar += 6;
+            console.info('Volt 5', line.slice(currentChar, currentChar+4));
+            voltage5 = parseInt(line.slice(currentChar, currentChar+4), 16) / 13107;
             msg += ' Volt 5=' + voltage5
+            currentChar += 4;
         }
         if (extraSensors["SBE 38"]) {
 
@@ -146,19 +150,20 @@ lineReader.on('line', (line, lineno = line_counter()) => {
             currentChar += 12;
         }
         if (extraSensors["Gas Tension Device"]) {
-            gtdPressure = parseInt(line.slice(currentChar, currentChar+8)) / 100000;
+            gtdPressure = parseInt(line.slice(currentChar, currentChar+8), 16) / 100000;
             currentChar += 8;
-            gtdTemp = parseInt(line.slice(currentChar, currentChar+6)) / 100000 - 10;
+            gtdTemp = parseInt(line.slice(currentChar, currentChar+6), 16) / 100000 - 10;
             currentChar += 6;
         }        
         if (extraSensors["OPTODE"]) {
-            oxygen = parseInt(line.slice(currentChar, currentChar+6)) / 10000 - 10;
+            oxygen = parseInt(line.slice(currentChar, currentChar+6), 16) / 10000 - 10;
             currentChar += 6;
+            msg += ' OPTODE=' + oxygen
         }
         if (extraSensors["SBE63"]) {
-            oxygenPhase = parseInt(line.slice(currentChar, currentChar+6)) / 100000 - 10;
+            oxygenPhase = parseInt(line.slice(currentChar, currentChar+6), 16) / 100000 - 10;
             currentChar += 6;
-            oxygenTempVoltage = parseInt(line.slice(currentChar, currentChar+6)) / 1000000 - 1;
+            oxygenTempVoltage = parseInt(line.slice(currentChar, currentChar+6), 16) / 1000000 - 1;
             currentChar += 6;
         }
         console.info(lineno, msg);
