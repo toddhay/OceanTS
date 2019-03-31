@@ -4,7 +4,7 @@ import {Table, Null} from 'apache-arrow';
 import * as moment from 'moment';
 import * as math from 'mathjs';
 import * as parser from 'fast-xml-parser';
-import { parseHex } from './sbe19plusV2';
+import { parseHex } from './src/sbe19plusV2/parseHex';
 
 // Sample Data
 const dir = "./data/sbe19plusV2/";
@@ -37,9 +37,21 @@ async function bulkProcess() {
     if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
         // Parse the SBE 19plusV2 hex file
         console.info('Parsing SBE19plusV2 file');
-        const output  = await parseHex(hexFile);
-        // parseHex(hexFile).then(function (output) {
-        console.info(`output: ${JSON.stringify(output['casts'])}`)
+        // const output  = await parseHex(hexFile);
+
+        // (async () => {
+        await parseHex(hexFile, instrument, sensors);
+        // console.info(`output: ${JSON.stringify(output['casts'])}`)
+
+            // for await (const line of parseHex(hexFile)) {
+            //   console.log(line);
+            // }
+        //   })();
+
+
+
+        // parseHex(hexFile).then((output) => {
+        //     console.info(`output: ${JSON.stringify(output)}`)
         // });
     }
 
