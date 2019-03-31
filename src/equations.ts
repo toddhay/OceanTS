@@ -44,15 +44,18 @@ export function temperature(df: Table, colName: string, c: Object): any {
 export function temp_test() {
 
     let c = {
-        "A0": -1.763479e-004,
-        "A1": 3.078888e-004,
-        "A2": -4.437235e-006,
-        "A3": 2.064047e-007,
+        "A0": 1.231679e-003,
+        "A1": 2.625697e-004,
+        "A2": -1.890234e-007,
+        "A3": 1.542035e-007,
         "Slope": 1,
         "Offset": 0
     };
     let adCounts = new Float32Array(
-        [656478.3, 563058.7, 362118.7, 314480.2, 253432.7, 209526.4, 183998.5]);
+        [675144.889, 601930.644, 417997.356, 368087.000, 299977.133, 247872.489, 216297.333]);
+    let correctOutputs = new Float32Array(
+        [1.0000, 4.4999, 15.0002, 18.4999, 23.9999, 29.0000, 32.5000]
+    );
     let colName = "Temperature A/D Counts";
     let df = Table.new([Float32Vector.from(adCounts)], [colName]);
 
