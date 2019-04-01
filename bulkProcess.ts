@@ -28,7 +28,7 @@ async function bulkProcess() {
     const instrument = xmlconJson.SBE_InstrumentConfiguration.Instrument;
     const sensors = instrument.SensorArray.Sensor;
 
-    // Parse hex file and convert to uncorrected values in arrow data structure
+    // Parse hex file and convert to raw, decimal values in arrow data structure
     if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
 
         // Parse the SBE 19plusV2 hex file
