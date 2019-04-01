@@ -86,10 +86,10 @@ export function conductivity(df: Table, colName: string, c: Object): any {
     else
         c = c["Coefficients"][0];   // ToDo - I do not currently handle this scenario
 
-    df.scan((idx) =>{
+    df.scan((idx) => {
         f = v(idx) / 1000.0;       // Convert frequency from Hz to kHz
         cond[idx] =  (c["G"] + c["H"] * f ** 2 + c["I"] * f ** 3 + c["J"] * f ** 4) /
-            (10 * (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) ));
+            (10.0 * (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) ));
     }, (batch) => {
         v = col(colName).bind(batch);
         t = col("Temperature (degC)").bind(batch);

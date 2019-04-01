@@ -19,45 +19,27 @@ console.info(`hex file: ${hexFile}`);
 async function bulkProcess() {
 // const bulkProcess = async() => {
 
-    // Find all of the hex files and associated xmlcon files
-    // ToDo
+    // ToDo - Find all of the hex files and associated xmlcon files
 
     // Read an individiaul hex and xmlcon file
-    // const hexFileInMemory = readFileSync(hexFile);
     const xmlconFileInMemory = readFileSync(xmlconFile, "utf8");
 
     // Retrieve the xmlcon instrument and sensor details as JSON
     const xmlconJson = parser.parse(xmlconFileInMemory);
     const instrument = xmlconJson.SBE_InstrumentConfiguration.Instrument;
     const sensors = instrument.SensorArray.Sensor;
-    // console.info(instrument);
-    // console.info(sensors);
 
     // Parse hex file and convert to uncorrected values in arrow data structure
     if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
+
         // Parse the SBE 19plusV2 hex file
         console.info('Parsing SBE19plusV2 file');
-        // const output  = await parseHex(hexFile);
-
-        // (async () => {
         await parseHex(hexFile, instrument, sensors);
-        // console.info(`output: ${JSON.stringify(output['casts'])}`)
-
-            // for await (const line of parseHex(hexFile)) {
-            //   console.log(line);
-            // }
-        //   })();
-
-
-
-        // parseHex(hexFile).then((output) => {
-        //     console.info(`output: ${JSON.stringify(output)}`)
-        // });
     }
 
-    // Auto QA/QC the new arrow data structure
+    // ToDo - Auto QA/QC the new arrow data structure
 
-    // Persist the data to disk
+    // ToDo - Persist the data to disk
 
 }
 
