@@ -1,6 +1,5 @@
 import { Table, FloatVector, predicate, Float32Vector, Column, Field } from 'apache-arrow';
 import { temperature, pressure, conductivity } from '../equations';
-import { col } from 'apache-arrow/compute/predicate';
 
 
 export async function convertResults (instrument: Object, coefficients: Object[], casts: Object,
@@ -29,16 +28,16 @@ export async function convertResults (instrument: Object, coefficients: Object[]
     colName = "Pressure A/D Counts";
     colName2 = "Pressure Temperature Compensation Voltage";
     df = await pressure(df, colName, colName2, coefficients[2]["PressureSensor"]);
-    msgArray = df.getColumn('Pressure (decibars)').toArray().slice(-3);
+    msgArray = df.getColumn('Pressure (dbars)').toArray().slice(-3);
     console.info(`pressure: ${msgArray}`);
 
-    // Conductivity
+    // Conductivity (S_per_m)
     colName = "Conductivity Frequency";
     df = await conductivity(df, colName, coefficients[1]["ConductivitySensor"]);
     msgArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(-3);
     console.info(`conductivity: ${msgArray}`);
 
-    // Oxygen, SBE 43
+    // Oxygen, SBE 43 (ml_per_l)
 
     colName = "External Voltage 0";
 
@@ -53,6 +52,9 @@ export async function convertResults (instrument: Object, coefficients: Object[]
 
     console.info(`\nschema: ${df.schema.fields.map(x => x.name)}`);
     console.info(`item 0: ${df.get(0)}`);
-    console.info(`item 0: ${df.get(1)}`);
-    console.info(`item 0: ${df.get(2)}`);
+    console.info(`item 1: ${df.get(1)}`);
+    console.info(`item 2: ${df.get(2)}`);
+
+    // Scan Rate - use for the temporal + spatial data integration
+    let scanRate = 4;
 }
