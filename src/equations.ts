@@ -87,7 +87,7 @@ export function conductivity(df: Table, colName: string, c: Object): any {
         c = c["Coefficients"][0];   // ToDo - I do not currently handle this scenario
 
     df.scan((idx) =>{
-        f = v(idx) / 1000.0;       // Convert to frequency in kHz
+        f = v(idx) / 1000.0;       // Convert frequency from Hz to kHz
         cond[idx] =  (c["G"] + c["H"] * f ** 2 + c["I"] * f ** 3 + c["J"] * f ** 4) /
             (10 * (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) ));
     }, (batch) => {
@@ -190,8 +190,8 @@ function test_conductivity() {
                         Float32Vector.from(pressures)], 
                         [colName, colName2, colName3]);
     df = conductivity(df, colName, c);
-    let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray();
-    console.info(`conductivity: ${conductivityArray}`);
+    let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(-3);
+    console.info(`Unit test:  conductivity: ${conductivityArray}`);
 
 }
 // test_temperature();
