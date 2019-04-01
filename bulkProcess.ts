@@ -17,7 +17,6 @@ const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
 console.info(`hex file: ${hexFile}`);
 
 async function bulkProcess() {
-// const bulkProcess = async() => {
 
     // ToDo - Find all of the hex files and associated xmlcon files
 
