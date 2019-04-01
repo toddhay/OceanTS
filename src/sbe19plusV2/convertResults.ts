@@ -3,7 +3,7 @@ import { temperature, pressure } from '../equations';
 import { col } from 'apache-arrow/compute/predicate';
 
 
-export function convertResults (instrument: Object, coefficients: Object[], casts: Object,
+export async function convertResults (instrument: Object, coefficients: Object[], casts: Object,
                         df: Table) {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
@@ -13,6 +13,7 @@ export function convertResults (instrument: Object, coefficients: Object[], cast
     */
     let colName: string = "";
     let colName2: string = "";
+    let msgArray = [];
 
     coefficients.forEach(x => {
         console.info(`coeff: ${JSON.stringify(x)}`);
@@ -20,19 +21,22 @@ export function convertResults (instrument: Object, coefficients: Object[], cast
 
     // Temperature (degC)
     colName = "Temperature A/D Counts";
-    df = temperature(df, colName, coefficients[0]['TemperatureSensor']);
-    console.info(`temp: ${df.getColumn('Temperature (degC)').toArray().slice(-3)}`);
+    df = await temperature(df, colName, coefficients[0]['TemperatureSensor']);
+    msgArray = df.getColumn('Temperature (degC)').toArray().slice(-3);
+    console.info(`temp: ${msgArray}`);
 
     // Pressure (dbars)
     colName = "Pressure A/D Counts";
     colName2 = "Pressure Temperature Compensation Voltage";
-    df = pressure(df, colName, colName2, coefficients[1]["ConductivitySensor"]);
+    df = await pressure(df, colName, colName2, coefficients[2]["PressureSensor"]);
+    msgArray = df.getColumn('Pressure (decibars)').toArray().slice(-3);
+    console.info(`pressure: ${msgArray}`);
 
     // Conductivity
     colName = "Conductivity Frequency";
 
     // Oxygen, SBE 43
-    
+
     colName = "External Voltage 0";
 
     // Fluorometer
