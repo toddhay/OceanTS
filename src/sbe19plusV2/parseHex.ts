@@ -172,20 +172,9 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
                 value = hex2dec(line.slice(currentChar, currentChar+rule.size));
                 if ((rule.operations !== null) && !(isNaN(value))) {
                     rule.operations.forEach((operation: any) => {
-                        // console.info(rule.variable);
-                        // console.info('\tvalue before', line.slice(currentChar, currentChar+rule.size), 'convert to', value, operation.op.name, 'by', operation.value);
                         value = operation.op(value, operation.value);   // Perform the rule math operation on the value
-                        // console.info('\tvalue after', value)
                     });
                 }
-                // else {
-                //     console.info(rule.variable, line.slice(currentChar, currentChar+rule.size), 'convert to', value);
-                // }
-                // if (rule.isADCount) {
-                //     value = counts2frequency(value);
-                    // if (rule.variable.indexOf('A/D Counts') > -1) 
-                    //     rule.variable = rule.variable.replace("A/D Counts", "Frequency");
-                // }
                 if ((value !== null) && !(isNaN(value))) {
                     if (lineNum === dataStartLine) {
                         schema.push(rule.variable)
