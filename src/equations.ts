@@ -1,6 +1,7 @@
 import * as math from 'mathjs';
 import { Float32Vector, Table, Dictionary } from 'apache-arrow';
 import { col } from 'apache-arrow/compute/predicate';
+import * as assert from 'assert';
 
 export function pressure_psia2dbar(p: number) {
     // Function to convert pressure in psia to dbar
@@ -61,6 +62,12 @@ export function temp_test() {
 
     df = temperature(df, colName, c);
     console.info(`temp: ${df.getColumn('Temperature (degC)').toArray()}`)
+    let outputs = df.getColumn('Temperature (degC)').toArray();
+    let precision: number = 3;
+    outputs.forEach(function (value, idx) {
+        console.info(`${idx} > ${value.toFixed(4)} ==? ${correctOutputs[idx]}`);
+        assert(value.toFixed(precision) === correctOutputs[idx], `temperature unit test failed, ${value.toFixed(precision)} !== ${correctOutputs[idx]}`);
+    });
 
 }
 
