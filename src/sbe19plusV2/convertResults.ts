@@ -1,5 +1,5 @@
 import { Table, FloatVector, predicate, Float32Vector, Column, Field } from 'apache-arrow';
-import { temperature, pressure } from '../equations';
+import { temperature, pressure, conductivity } from '../equations';
 import { col } from 'apache-arrow/compute/predicate';
 
 
@@ -34,6 +34,9 @@ export async function convertResults (instrument: Object, coefficients: Object[]
 
     // Conductivity
     colName = "Conductivity Frequency";
+    df = await conductivity(df, colName, coefficients[1]["ConductivitySensor"]);
+    msgArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(-3);
+    console.info(`conductivity: ${msgArray}`);
 
     // Oxygen, SBE 43
 
@@ -48,4 +51,8 @@ export async function convertResults (instrument: Object, coefficients: Object[]
     // Oxygen Optode, Aanderaa
     colName = "OPTODE Oxygen";
 
+    console.info(`\nschema: ${df.schema.fields.map(x => x.name)}`);
+    console.info(`item 0: ${df.get(0)}`);
+    console.info(`item 0: ${df.get(1)}`);
+    console.info(`item 0: ${df.get(2)}`);
 }

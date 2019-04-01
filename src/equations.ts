@@ -1,9 +1,9 @@
 import * as math from 'mathjs';
-import { Float32Vector, Table, Dictionary } from 'apache-arrow';
+import { Float32Vector, Float64Vector, Table, Dictionary } from 'apache-arrow';
 import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
-export function pressure_psia2dbar(p: number) {
+export function pressure_psia2decibar(p: number) {
     // Function to convert pressure in psia to dbar
     // p - pressure in psia
     return (p - 14.7) * 0.689476
@@ -20,26 +20,22 @@ export function pressure(df: Table, colName: string, colName2: string, c: Object
         "PTEMPA2":-0.226510802,"PTCA0":524405.088,"PTCA1":-22.4344595,"PTCA2":0.0108628644,
         "PTCB0":24.74475,"PTCB1":-0.00245,"PTCB2":0,"Offset":0}}
     */
-
-    console.info(`pressure schema: ${df.schema.fields.map(x => x.name)}`)
-
     let p = new Float32Array(df.length);
-    let counts: any = null, temp_counts: any = null;
+    let counts: any = null, voltages: any = null;
     let y: number = null, t: number = null, x: number = null, n: number = null, pTemp: number = null;
     df.scan((idx) =>{
-        y = temp_counts(idx);
-        t = c["PTEMPA0"] + c["PTEMPA1"] * y + c["PTEMPA2"] * y;
-        x = counts(idx) - c["PTCA0"] - c["PTCA1"] * t - c["PTCA2"] * t ** 2;
-        n = x * c["PTCB0"] / (c["PTCB0"] + c["PTCB1"] * t + c["PTCB2"] * t ** 2)
-        pTemp = c["PA0"] + c["PA1"] * n + c["PA2"] * n ** 2;
-        p[idx] = pressure_psia2dbar(pTemp);
+        y = voltages(idx);
+        // if (idx >= df.length - 3) console.info(`y = ${y}`);
+        t = c["PTEMPA0"] + c["PTEMPA1"] * y + c["PTEMPA2"] * (y ** 2);
+        x = counts(idx) - c["PTCA0"] - c["PTCA1"] * t - c["PTCA2"] * (t ** 2);
+        n = x * c["PTCB0"] / (c["PTCB0"] + c["PTCB1"] * t + c["PTCB2"] * (t ** 2))
+        pTemp = c["PA0"] + c["PA1"] * n + c["PA2"] * (n ** 2);
         // p[idx] = pTemp;
+        p[idx] = pressure_psia2decibar(pTemp);
     }, (batch) => {
         counts = col(colName).bind(batch);
-        // temp_counts = col(colName2).bind(batch);
-        temp_counts = col("Temperature A/D Counts").bind(batch);
+        voltages = col(colName2).bind(batch);
     });
-    // console.info(`pressure: ${p.slice(-3)}`);
     let newCol: string = "Pressure (decibars)";
     df = df.assign(Table.new([Float32Vector.from(p)], [newCol]));
     return df;
@@ -78,7 +74,46 @@ export function temperature(df: Table, colName: string, c: Object): any {
     return df;
 }
 
-export function temp_test() {
+export function conductivity(df: Table, colName: string, c: Object): any {
+    /* 
+        Calculate the conductivity (S_per_m) from conductivity frequency
+
+        Sample calibration coefficients:
+
+        {"ConductivitySensor":{"SerialNumber":5048,"CalibrationDate":"05-Mar-16","UseG_J":1,
+        "SeriesR":0,"CellConst":2000,"ConductivityType":0,"Coefficients":[
+            {"A":0,"B":0,"C":0,"D":0,"M":0,"CPcor":-9.57e-8},
+            {"G":-1.03944282,"H":0.162763827,"I":-0.00151623599,"J":0.000127404151,"CPcor":-9.57e-8,
+                "CTcor":0.00000325,"WBOTC":0}],
+        "Slope":1,"Offset":0}}
+
+    */
+    let cond = new Float32Array(df.length);
+    let f: number = null;
+    let v: any = null, t: any = null, p: any = null;
+
+    if (c["UseG_J"] === 1)
+        c = c["Coefficients"][1];
+    else
+        c = c["Coefficients"][0];   // ToDo - I do not currently handle this scenario
+
+    df.scan((idx) =>{
+        f = v(idx) / 1000.0;       // Convert to frequency in kHz
+        cond[idx] =  (c["G"] + c["H"] * f ** 2 + c["I"] * f ** 3 + c["J"] * f ** 4) /
+            (10 * (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) ));
+    }, (batch) => {
+        v = col(colName).bind(batch);
+        t = col("Temperature (degC)").bind(batch);
+        p = col("Pressure (decibars)").bind(batch);
+    });
+    let newCol: string = "Conductivity (S_per_m)";
+    df = df.assign(Table.new([Float32Vector.from(cond)], [newCol]));
+    return df;  
+}
+
+
+
+function test_temperature() {
 
     let c = {
         "A0": 1.231679e-003,
@@ -107,7 +142,7 @@ export function temp_test() {
 
 }
 
-export function temp_pressure() {
+function test_pressure() {
 
     let c = {
         "PA0": -7.764053e+000,
@@ -126,19 +161,54 @@ export function temp_pressure() {
     let counts = new Float32Array(
         [525336.8, 589897.9, 654847.6, 720155.1, 785813.8, 851830.2, 785809.9,
             720174.8, 654847.3, 589895.3, 525323.6]);
-    let voltages = new Float32Array(Array(counts.length).fill(1.7));
+    let voltages = new Float32Array(counts.length).fill(1.7);
     let colName = "Pressure A/D Counts";
     let colName2 = "Pressure Temperature Compensation Voltage";
     let df = Table.new([Float32Vector.from(counts),
                         Float32Vector.from(voltages)], 
                         [colName, colName2]);
     df = pressure(df, colName, colName2, c);
-    let tempArray = df.getColumn('Pressure (decibars)').toArray().slice(-3);
-    console.info(`pressure: ${tempArray}`);
+    let pressureArray = df.getColumn('Pressure (decibars)').toArray().slice(-3);
+    // console.info(`pressure: ${pressureArray}`);
 
 }
 
-// temp_test();
-temp_pressure();
+function test_conductivity() {
+
+    let c = {
+        "UseG_J": 1,
+        "Coefficients": [
+            {},
+            {"G": -1.050175e+000,
+            "H": 1.459037e-001,
+            "I": -2.198678e-004,
+            "J": 3.889823e-005,
+            "CTcor": 3.2500e-006,
+            "CPcor": -9.5700e-008,  }            
+        ]
+  
+    }
+    let frequencies = new Float32Array(
+        [2685.71, 5249.53, 5445.26, 6027.74, 6219.29, 6516.75, 6782.81, 6966.29]);
+    let temperatures = new Float32Array(
+        [22.0000, 1.0000, 4.5000, 15.0001, 18.4999, 24.0000, 29.0000, 32.5000]
+    );
+    let pressures = new Float32Array(frequencies.length).fill(1);
+
+    let colName = "Conducitivity Frequency";
+    let colName2 = "Temperature (degC)";
+    let colName3 = "Pressure (decibars)";
+    let df = Table.new([Float32Vector.from(frequencies),
+                        Float32Vector.from(temperatures),
+                        Float32Vector.from(pressures)], 
+                        [colName, colName2, colName3]);
+    df = conductivity(df, colName, c);
+    let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(-3);
+    console.info(`conductivity: ${conductivityArray}`);
+
+}
+// test_temperature();
+// test_pressure();
+test_conductivity();
 
 
