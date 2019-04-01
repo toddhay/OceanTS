@@ -3,7 +3,7 @@ import { Float32Vector, Float64Vector, Table, Dictionary } from 'apache-arrow';
 import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
-export function pressure_psia2decibar(p: number) {
+export function pressure_psia2dbar(p: number) {
     // Function to convert pressure in psia to dbar
     // p - pressure in psia
     return (p - 14.7) * 0.689476
