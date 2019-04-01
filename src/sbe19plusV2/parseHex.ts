@@ -67,10 +67,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
 
     lineReader.on('line', (line, lineNum = line_counter()) => {
 
-    // for await (const line of lineReader) {}
-
-        // console.info(`${lineNum}: ${line}`);
-
         // if ((lineNum > dataStartLine) && (dataStartLine !== -1)) lineReader.close();
 
         if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
@@ -150,12 +146,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
         if (line.startsWith('*END*')) {
             // Parse where the data lines start
             dataStartLine = lineNum + 1; 
-
-            // console.info('sensors: ' + JSON.stringify(sensors));
-            // console.info('extraSensors: ' + JSON.stringify(extraSensors));
-            // console.info('voltages: '+ JSON.stringify(voltages));
-            // console.info('casts: ' + JSON.stringify(casts));
-            // console.info('dataStartLine: ' + dataStartLine);
         }
 
         if ((lineNum >= dataStartLine) && (dataStartLine !== -1)) {
@@ -190,9 +180,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
     });
 
     lineReader.on('close', function() {
-
-    // await once(lineReader, 'close');
-
         let end = moment();
         let duration = moment.duration(end.diff(start));
         let dataArrays = [];
@@ -202,18 +189,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-
-        const colName = 'Temperature A/D Counts';
-        console.log(`   name: ${df.getColumn(colName).name} 
-        type: ${df.getColumn(colName).type}, 
-        length: ${df.length}, 
-        first item: ${df.getColumn(colName).get(0)}, 
-        second to end ${df.getColumn(colName).get(df.count()-2)},
-        end ${df.getColumn(colName).get(df.count()-1)}`);
-
-        console.info(`schema: ${schema}`)
-        console.log('Processing completed, ' + dataRow + ' records processed, elapsed time: ' + duration.asSeconds() + 's');
-        // convertResults({"df": df, "casts": casts, "instrument": instrument, "sensors": sensors});
         convertResults(instrument, coefficients, casts, df);
     });
 }
