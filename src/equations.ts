@@ -31,7 +31,7 @@ export function pressure(df: Table, colName: string, colName2: string, c: Object
         n = x * c["PTCB0"] / (c["PTCB0"] + c["PTCB1"] * t + c["PTCB2"] * (t ** 2))
         pTemp = c["PA0"] + c["PA1"] * n + c["PA2"] * (n ** 2);
         // p[idx] = pTemp;
-        p[idx] = pressure_psia2decibar(pTemp);
+        p[idx] = pressure_psia2dbar(pTemp);
     }, (batch) => {
         counts = col(colName).bind(batch);
         voltages = col(colName2).bind(batch);
