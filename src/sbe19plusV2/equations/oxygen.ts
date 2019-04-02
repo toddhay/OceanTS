@@ -3,12 +3,24 @@ import { Float32Vector, Float64Vector, Table, Dictionary } from 'apache-arrow';
 import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
+function umoles_per_l2ml_per_l(x: number) {
+    /*
+        Function to convert Oxygen in umoles/l to ml/l
+    */
+
+}
 
 function oxygenSolubility(salinity: number, temperature: number): number {
     /*
     Method for calculating the Oxygen Solubility per Garcia & Gordon (1992), as discussed
     in the:
     
+    Seabird Application Note 64, SBE 43 Dissolved Oxygen Sensor - Background Information, Deployment
+        Recommendations, and Cleaning and Storage, p. 8
+    https://www.seabird.com/asset-get.download.jsa?id=54627861706
+
+    OR
+
     Seabird Data Processing Manual revision 7.26.8, p. 158, accessible here:
     https://www.seabird.com/asset-get.download.jsa?code=251446
     

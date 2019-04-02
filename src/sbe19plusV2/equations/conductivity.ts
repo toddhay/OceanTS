@@ -74,9 +74,9 @@ function test_conductivity() {
     let trueValues = [0.0000, 2.9683, 3.2746, 4.2540, 4.5983, 5.1550, 5.6755, 6.0470];
 
     console.info(`Conductivity Unit Test`);
-    console.info('\tGround Truth\tCalculated Value\t\tCalculated Value * 10');
+    console.info('\tGround Truth\tCalculated Value');
     trueValues.forEach((x, idx) => {
-        console.info(`\t${x}\t\t${conductivityArray[idx]}\t\t${conductivityArray[idx]*10}`)
+        console.info(`\t${x}\t\t${conductivityArray[idx]}`);
     });
 }
 

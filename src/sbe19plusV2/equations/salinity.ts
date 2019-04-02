@@ -96,7 +96,7 @@ function test_salinity() {
                         [colName, colName2, colName3]);
     df = salinity(df);
     let salinityArray = df.getColumn('Salinity (psu)').toArray();
-    console.info(`Unit test:  salinity: ${salinityArray}`);
+    console.info(`Salinity Unit Test:\n\t${salinityArray}`);
 
 }
 
