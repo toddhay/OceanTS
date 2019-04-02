@@ -29,7 +29,7 @@ export function conductivity(df: Table, colName: string, c: Object): any {
     df.scan((idx) => {
         f = v(idx) / 1000.0;       // Convert frequency from Hz to kHz
         cond[idx] = (c["G"] + c["H"] * f ** 2 + c["I"] * f ** 3 + c["J"] * f ** 4) /
-            (10.0 * (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) ));
+            (1 + c["CTcor"] * t(idx) + c["CPcor"] * p(idx) );
     }, (batch) => {
         v = col(colName).bind(batch);
         t = col("Temperature (degC)").bind(batch);

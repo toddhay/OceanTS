@@ -113,7 +113,7 @@ function test_oxygen() {
     console.info(`Oxygen (SBE43) Unit Test`);
     console.info('\tGround Truth\tCalculated Value');
     trueValues.forEach((x, idx) => {
-        console.info(`\t${x}\t\t${oxygen[idx]}`)
+        console.info(`\t${x}\t\t${oxygenArray[idx]}`)
     });
 }
 

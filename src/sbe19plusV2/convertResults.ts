@@ -18,42 +18,42 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     let colName: string = "";
     let colName2: string = "";
     let msgArray = [];
-    let sliceSize: number = -3;
+    let sliceStart: number = 0, sliceEnd: number = 5;
 
     coefficients.forEach(x => {
         console.info(`coeff: ${JSON.stringify(x)}`);
     })
 
-    console.info(`last ${sliceSize} elements of the columns:`)
+    console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
 
     // Temperature (degC)
     colName = "Temperature A/D Counts";
     df = await temperature(df, colName, coefficients[0]['TemperatureSensor']);
-    msgArray = df.getColumn('Temperature (degC)').toArray().slice(sliceSize);
+    msgArray = df.getColumn('Temperature (degC)').toArray().slice(sliceStart, sliceEnd);
     console.info(`\tTemp: ${msgArray}`);
 
     // Pressure (dbars)
     colName = "Pressure A/D Counts";
     colName2 = "Pressure Temperature Compensation Voltage";
     df = await pressure(df, colName, colName2, coefficients[2]["PressureSensor"]);
-    msgArray = df.getColumn('Pressure (dbars)').toArray().slice(sliceSize);
+    msgArray = df.getColumn('Pressure (dbars)').toArray().slice(sliceStart, sliceEnd);
     console.info(`\tPressure: ${msgArray}`);
 
     // Conductivity (S_per_m)
     colName = "Conductivity Frequency";
     df = await conductivity(df, colName, coefficients[1]["ConductivitySensor"]);
-    msgArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(sliceSize);
+    msgArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(sliceStart, sliceEnd);
     console.info(`\tConductivity: ${msgArray}`);
 
     // Salinity (psu)
     df = await salinity(df);
-    msgArray = df.getColumn("Salinity (psu)").toArray().slice(sliceSize);
+    msgArray = df.getColumn("Salinity (psu)").toArray().slice(sliceStart, sliceEnd);
     console.info(`\tSalinity: ${msgArray}`);
 
     // Oxygen, SBE 43 (ml_per_l)
     colName = "External Voltage 0";
     df = await oxygen(df, colName, coefficients[3]["OxygenSensor"]);
-    msgArray = df.getColumn("Oxygen (ml_per_l)").toArray().slice(sliceSize);
+    msgArray = df.getColumn("Oxygen (ml_per_l)").toArray().slice(sliceStart, sliceEnd);
     console.info(`\tOxygen (SBE43): ${msgArray}`);
 
     console.info(`schema: ${df.schema.fields.map(x => x.name)}`);
