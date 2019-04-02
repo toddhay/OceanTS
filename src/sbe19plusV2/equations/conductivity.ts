@@ -73,10 +73,10 @@ function test_conductivity() {
     let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray();
     let trueValues = [0.0000, 2.9683, 3.2746, 4.2540, 4.5983, 5.1550, 5.6755, 6.0470];
 
-    console.info(`Conductivity Unit Test`);
-    console.info('\tGround Truth\tCalculated Value');
+    console.info(`\nConductivity Unit Test`);
+    console.info('\tGround Truth\tCalculated Value\tDiff');
     trueValues.forEach((x, idx) => {
-        console.info(`\t${x}\t\t${conductivityArray[idx]}`);
+        console.info(`\t${x}\t\t${conductivityArray[idx].toFixed(4)}\t\t\t${(x - conductivityArray[idx]).toFixed(4)}`);
     });
 }
 

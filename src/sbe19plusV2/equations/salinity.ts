@@ -96,7 +96,13 @@ function test_salinity() {
                         [colName, colName2, colName3]);
     df = salinity(df);
     let salinityArray = df.getColumn('Salinity (psu)').toArray();
-    console.info(`Salinity Unit Test:\n\t${salinityArray}`);
+    let trueValues = [0.0000, 34.7173, 34.6977, 34.6560, 34.6472, 34.6375, 34.6321, 34.6292];
+
+    console.info(`\nSalinity Unit Test`);
+    console.info('\tGround Truth\tCalculated Value\t\tDiff');
+    trueValues.forEach((x, idx) => {
+        console.info(`\t${x}\t\t${salinityArray[idx]}\t\t${(x - salinityArray[idx]).toFixed(4)}`);
+    });
 
 }
 

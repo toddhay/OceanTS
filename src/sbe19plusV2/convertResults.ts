@@ -3,7 +3,7 @@ import { pressure } from './equations/pressure';
 import { temperature } from './equations/temperature';
 import { conductivity } from './equations/conductivity';
 import { salinity } from './equations/salinity';
-import { oxygen } from './equations/oxygen';
+import { oxygen, oxygen_optode } from './equations/oxygen';
 import { depth} from './equations/depth';
 
 
@@ -18,7 +18,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     let colName: string = "";
     let colName2: string = "";
     let msgArray = [];
-    let sliceStart: number = 0, sliceEnd: number = 5;
+    let sliceStart: number = 30, sliceEnd: number = 35;
 
     coefficients.forEach(x => {
         console.info(`coeff: ${JSON.stringify(x)}`);
@@ -56,9 +56,6 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     msgArray = df.getColumn("Oxygen (ml_per_l)").toArray().slice(sliceStart, sliceEnd);
     console.info(`\tOxygen (SBE43): ${msgArray}`);
 
-    console.info(`schema: ${df.schema.fields.map(x => x.name)}`);
-    process.exit(0);
-
     // Fluorometer
     colName = "External Voltage 2";
 
@@ -67,8 +64,13 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
     // Oxygen Optode, Aanderaa
     colName = "OPTODE Oxygen";
+    df = await oxygen_optode(df, colName, coefficients[6]["OptodeOxygenAanderaa"]);
+    msgArray = df.getColumn("OPTODE Oxygen (ml_per_l)").toArray().slice(sliceStart, sliceEnd);
+    console.info(`\tOxygen (OPTODE Aanderaa): ${msgArray.map(x => (x.toFixed(4)))}`);
 
-    console.info(`\nschema: ${df.schema.fields.map(x => x.name)}`);
+    console.info(`schema: ${df.schema.fields.map(x => x.name)}`);
+    process.exit(0);
+
     console.info(`item 0: ${df.get(0)}`);
     console.info(`item 1: ${df.get(1)}`);
     console.info(`item 2: ${df.get(2)}`);

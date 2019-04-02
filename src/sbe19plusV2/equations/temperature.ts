@@ -39,9 +39,7 @@ function test_temperature() {
     };
     let adCounts = new Float32Array(
         [675144.889, 601930.644, 417997.356, 368087.000, 299977.133, 247872.489, 216297.333]);
-    let correctOutputs = new Float32Array(
-        [1.0000, 4.4999, 15.0002, 18.4999, 23.9999, 29.0000, 32.5000]
-    );
+    let groundTruth = [1.0000, 4.4999, 15.0002, 18.4999, 23.9999, 29.0000, 32.5000];
     let colName = "Temperature A/D Counts";
     let df = Table.new([Float32Vector.from(adCounts)], [colName]);
 
@@ -49,8 +47,10 @@ function test_temperature() {
     console.info(`temp: ${df.getColumn('Temperature (degC)').toArray()}`)
     let outputs = df.getColumn('Temperature (degC)').toArray();
     let precision: number = 3;
+    console.info('\nTemperature Unit Test');
+    console.info('\tGround Truth\tCalculated Value\tDiff');
     outputs.forEach(function (value, idx) {
-        console.info(`${idx} > ${value.toFixed(4)} ==? ${correctOutputs[idx]}`);
+        console.info(`\t${value.toFixed(4)}\t\t${groundTruth[idx]}\t\t\t${(value - groundTruth[idx]).toFixed(4)}`);
         // assert(value.toFixed(precision) === correctOutputs[idx], `temperature unit test failed, ${value.toFixed(precision)} !== ${correctOutputs[idx]}`);
     });
 }

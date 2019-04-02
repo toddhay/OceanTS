@@ -6,8 +6,22 @@ import * as assert from 'assert';
 function umoles_per_l2ml_per_l(x: number) {
     /*
         Function to convert Oxygen in umoles/l to ml/l
-    */
 
+        x: number - umoles/l of oxygen
+
+        Convert using the molar volume of oxgygen as 22.3916 L/mol at standard
+        temperature and pressure (0 degC, 1 atmosphere) (per Garcia & Gordon 1992)
+
+        References:
+        https://www.oceanbestpractices.net/bitstream/handle/11329/417/56281.pdf?sequence=1&isAllowed=y
+
+        OR
+
+        p. 12, Section 5, Unit conversion of oxygen
+        http://www.argodatamgt.org/content/download/2928/21973/file/
+
+    */
+   return x / 44.6596;
 }
 
 function oxygenSolubility(salinity: number, temperature: number): number {
@@ -56,7 +70,11 @@ export function oxygen(df: Table, colName: string, c: Object): Table {
     */
     
     // Get Coefficients
-    c = c["CalibrationCoefficients"][1];    // ToDo How do we know that we need the second set?
+    if (c["Use2007Equation"] === 1)
+        c = c["CalibrationCoefficients"][1];
+    else
+        c = c["CalibrationCoefficients"][0];    // ToDo I don't currently handle this scenario
+                                                // This is for data prior to 2007
 
     let oxy = new Float32Array(df.length);
     let t: any = null, p: any = null, s: any = null, v: any = null;
@@ -87,9 +105,32 @@ export function oxygen(df: Table, colName: string, c: Object): Table {
     return df;  
 }
 
+export function oxygen_optode(df: Table, colName: string, c:Object): Table {
+    /*
+        Method to calculate the oxygen in ml/l units from the OPTODE Aanderaa sensor
+    */
+   let oxy = new Float32Array(df.length);
+   let v: any = null;
+
+   try {
+       df.scan((idx) => {
+           oxy[idx] = umoles_per_l2ml_per_l(v(idx));
+       }, (batch) => {
+           v = col(colName).bind(batch);
+       });
+       let newCol: string = "OPTODE Oxygen (ml_per_l)";
+       df = df.assign(Table.new([Float32Vector.from(oxy)], [newCol]));
+   } catch(e) {
+       console.log(e);
+   }
+    return df
+}
+
+
 function test_oxygen() {
 
     let c = {
+        "Use2007Equation": 1,
         "CalibrationCoefficients": [
             {},
             {
@@ -122,10 +163,10 @@ function test_oxygen() {
     let trueValues = [1.09, 1.10, 1.10, 1.12, 1.14, 1.15, 3.85, 3.86, 3.87, 3.87, 3.87,
         3.93, 6.59, 6.59, 6.60, 6.60, 6.61, 6.63];
 
-    console.info(`Oxygen (SBE43) Unit Test`);
-    console.info('\tGround Truth\tCalculated Value');
+    console.info(`\nOxygen (SBE43) Unit Test`);
+    console.info('\tGround Truth\tCalculated Value\t\tDiff');
     trueValues.forEach((x, idx) => {
-        console.info(`\t${x}\t\t${oxygenArray[idx]}`)
+        console.info(`\t${x}\t\t${oxygenArray[idx]}\t\t${(x - oxygenArray[idx]).toFixed(4)}`);
     });
 }
 

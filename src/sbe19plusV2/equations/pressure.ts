@@ -4,7 +4,7 @@ import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
 
-export function pressure_psia2dbar(p: number) {
+export function psia2dbar(p: number) {
     // Function to convert pressure in psia to dbar
     // p - pressure in psia
     return (p - 14.7) * 0.689476
@@ -32,7 +32,7 @@ export function pressure(df: Table, colName: string, colName2: string, c: Object
         n = x * c["PTCB0"] / (c["PTCB0"] + c["PTCB1"] * t + c["PTCB2"] * (t ** 2))
         pTemp = c["PA0"] + c["PA1"] * n + c["PA2"] * (n ** 2);
         // p[idx] = pTemp;
-        p[idx] = pressure_psia2dbar(pTemp);
+        p[idx] = psia2dbar(pTemp);
     }, (batch) => {
         counts = col(colName).bind(batch);
         voltages = col(colName2).bind(batch);
