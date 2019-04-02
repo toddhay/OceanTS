@@ -190,7 +190,7 @@ function test_conductivity() {
                         Float32Vector.from(pressures)], 
                         [colName, colName2, colName3]);
     df = conductivity(df, colName, c);
-    let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(-3);
+    let conductivityArray = df.getColumn('Conductivity (S_per_m)').toArray();
     console.info(`Unit test:  conductivity: ${conductivityArray}`);
 
 }
