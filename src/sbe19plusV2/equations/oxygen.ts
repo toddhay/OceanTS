@@ -3,7 +3,7 @@ import { Float32Vector, Float64Vector, Table, Dictionary } from 'apache-arrow';
 import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
-function umoles_per_l2ml_per_l(x: number) {
+function umoles_per_l2ml_per_l(x: number): number {
     /*
         Function to convert Oxygen in umoles/l to ml/l
 
