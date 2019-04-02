@@ -5,7 +5,7 @@ import { Table, FloatVector, Dictionary } from 'apache-arrow';
 import * as moment from 'moment';
 import * as math from 'mathjs';
 import { hex2dec, counts2frequency } from '../utilities';
-import { convertResults } from './convertResults';
+import { convertToEngineeringUnits } from './convertResults';
 
 
 export function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[]) {
@@ -189,6 +189,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        convertResults(instrument, coefficients, casts, df);
+        convertToEngineeringUnits(instrument, coefficients, casts, df);
     });
 }
