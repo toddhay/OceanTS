@@ -54,4 +54,4 @@ function test_temperature() {
     });
 }
 
-test_temperature();
+// test_temperature();

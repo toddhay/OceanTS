@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync, writeFile } from 'fs';
 import {Table, Null} from 'apache-arrow';
-// import axios from 'axios';
+import Axios from 'axios';
 import fetch from 'node-fetch';
 import * as moment from 'moment';
 
