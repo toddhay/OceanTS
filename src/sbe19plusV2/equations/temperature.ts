@@ -44,7 +44,6 @@ function test_temperature() {
     let df = Table.new([Float32Vector.from(adCounts)], [colName]);
 
     df = temperature(df, colName, c);
-    console.info(`temp: ${df.getColumn('Temperature (degC)').toArray()}`)
     let outputs = df.getColumn('Temperature (degC)').toArray();
     let precision: number = 3;
     console.info('\nTemperature Unit Test');

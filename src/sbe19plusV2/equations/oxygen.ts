@@ -55,9 +55,9 @@ function oxygenSolubility(salinity: number, temperature: number): number {
 
 }
 
-export function oxygen(df: Table, colName: string, c: Object): Table {
+export function oxygen_sbe43(df: Table, colName: string, c: Object, scanRate: number = 4): Table {
     /*
-        Calculate the Oxygen (ml_per_l) per:
+        Calculate the SBE43 Oxygen (ml_per_l) per:
 
         Seabird SBE43 Calibration Worksheet (does not include tau + dvdt corrections)
         https://github.com/nwfsc-fram/OceanTS/blob/master/docs/SBE%2043%20O1505%2022Nov16.pdf
@@ -80,10 +80,13 @@ export function oxygen(df: Table, colName: string, c: Object): Table {
     let t: any = null, p: any = null, s: any = null, v: any = null;
     let tau: number = null, dvdt: number = null, oxySol: number = null, K: number = null;
 
+
     try {
         df.scan((idx) => {
             tau = c["Tau20"] * Math.exp( c["D1"] * p(idx) + c["D2"] * (t(idx) - 20));
-            dvdt = v(idx-1) ? v(idx) - v(idx-1) : 0;     // ToDo Calculate over 2s window
+            dvdt = v(idx-1) ? (v(idx) - v(idx-1)) * scanRate : 0;     // ToDo Calculate over 2s window
+            dvdt = 0;   // ToDo - Comment out - this temporariliy disables the tau correction
+
             oxySol = oxygenSolubility(s(idx), t(idx));
             K = t(idx) + 273.15;
             oxy[idx] = c["Soc"] * (v(idx) + c["offset"] + tau * dvdt) *
@@ -142,7 +145,10 @@ function test_oxygen() {
                 "C": -2.3781e-006,
                 "E": 0.036,
                 "D1": 1.92634e-4,
-                "D2": -4.64803e-2        
+                "D2": -4.64803e-2,
+                "H1": -3.300000e-2,
+                "H2": 5.00000e+3,
+                "H3": 1.45000e+3  
             }
         ]
     };
@@ -158,15 +164,15 @@ function test_oxygen() {
                         Float32Vector.from(pressures),
                         Float32Vector.from(salinities)],
                         [colName, "Temperature (degC)", "Pressure (dbars)", "Salinity (psu)"]);
-    df = oxygen(df, colName, c);
+    df = oxygen_sbe43(df, colName, c);
     let oxygenArray = df.getColumn("Oxygen (ml_per_l)").toArray();
     let trueValues = [1.09, 1.10, 1.10, 1.12, 1.14, 1.15, 3.85, 3.86, 3.87, 3.87, 3.87,
         3.93, 6.59, 6.59, 6.60, 6.60, 6.61, 6.63];
 
     console.info(`\nOxygen (SBE43) Unit Test`);
-    console.info('\tGround Truth\tCalculated Value\t\tDiff');
+    console.info('\tGround Truth\tCalculated Value\tDiff');
     trueValues.forEach((x, idx) => {
-        console.info(`\t${x}\t\t${oxygenArray[idx]}\t\t${(x - oxygenArray[idx]).toFixed(4)}`);
+        console.info(`\t${x}\t\t${oxygenArray[idx].toFixed(2)}\t\t\t${(x - oxygenArray[idx]).toFixed(2)}`);
     });
 }
 

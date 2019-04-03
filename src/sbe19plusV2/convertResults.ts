@@ -3,8 +3,10 @@ import { pressure } from './equations/pressure';
 import { temperature } from './equations/temperature';
 import { conductivity } from './equations/conductivity';
 import { salinity } from './equations/salinity';
-import { oxygen, oxygen_optode } from './equations/oxygen';
+import { oxygen_sbe43, oxygen_optode } from './equations/oxygen';
 import { depth} from './equations/depth';
+import { turbidity } from './equations/turbidity';
+import { fluorescence } from './equations/fluorescence';
 
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object,
@@ -15,66 +17,49 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     function relies heavily upon the equations found in the equations folder for the instrument-specific 
     conversion equations
     */
-    let colName: string = "";
-    let colName2: string = "";
-    let msgArray = [];
-    let sliceStart: number = 30, sliceEnd: number = 35;
-
-    coefficients.forEach(x => {
-        console.info(`coeff: ${JSON.stringify(x)}`);
-    })
-
-    console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
+   
+    // Scan Rate - use for the temporal + spatial data integration
+    let scanRate = 4;
 
     // Temperature (degC)
-    colName = "Temperature A/D Counts";
-    df = await temperature(df, colName, coefficients[0]['TemperatureSensor']);
-    msgArray = df.getColumn('Temperature (degC)').toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tTemp: ${msgArray}`);
+    df = await temperature(df, "Temperature A/D Counts", coefficients[0]['TemperatureSensor']);
 
     // Pressure (dbars)
-    colName = "Pressure A/D Counts";
-    colName2 = "Pressure Temperature Compensation Voltage";
-    df = await pressure(df, colName, colName2, coefficients[2]["PressureSensor"]);
-    msgArray = df.getColumn('Pressure (dbars)').toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tPressure: ${msgArray}`);
+    df = await pressure(df, "Pressure A/D Counts", "Pressure Temperature Compensation Voltage", coefficients[2]["PressureSensor"]);
 
     // Conductivity (S_per_m)
-    colName = "Conductivity Frequency";
-    df = await conductivity(df, colName, coefficients[1]["ConductivitySensor"]);
-    msgArray = df.getColumn('Conductivity (S_per_m)').toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tConductivity: ${msgArray}`);
+    df = await conductivity(df, "Conductivity Frequency", coefficients[1]["ConductivitySensor"]);
 
     // Salinity (psu)
     df = await salinity(df);
-    msgArray = df.getColumn("Salinity (psu)").toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tSalinity: ${msgArray}`);
 
     // Oxygen, SBE 43 (ml_per_l)
-    colName = "External Voltage 0";
-    df = await oxygen(df, colName, coefficients[3]["OxygenSensor"]);
-    msgArray = df.getColumn("Oxygen (ml_per_l)").toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tOxygen (SBE43): ${msgArray}`);
+    df = await oxygen_sbe43(df, "External Voltage 0", coefficients[3]["OxygenSensor"], scanRate);
 
-    // Fluorometer
-    colName = "External Voltage 2";
+    // Fluorometer - "External Voltage 2"
 
-    // Turbidity
-    colName = "External Voltage 3";
+    // Turbidity - "External Voltage 3"
 
     // Oxygen Optode, Aanderaa
-    colName = "OPTODE Oxygen";
-    df = await oxygen_optode(df, colName, coefficients[6]["OptodeOxygenAanderaa"]);
-    msgArray = df.getColumn("OPTODE Oxygen (ml_per_l)").toArray().slice(sliceStart, sliceEnd);
-    console.info(`\tOxygen (OPTODE Aanderaa): ${msgArray.map(x => (x.toFixed(4)))}`);
+    df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
 
-    console.info(`schema: ${df.schema.fields.map(x => x.name)}`);
-    process.exit(0);
+    // Retrieve Haul, Date/Time, Latitude, Longitude data from the FRAM Data Warehouse
+    
+    // Depth - Requires Latitude data first
 
-    console.info(`item 0: ${df.get(0)}`);
-    console.info(`item 1: ${df.get(1)}`);
-    console.info(`item 2: ${df.get(2)}`);
 
-    // Scan Rate - use for the temporal + spatial data integration
-    let scanRate = 4;
+    // Display the results
+    let msgArray = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
+        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)"];
+    let results = [];
+    let sliceStart: number = 30, sliceEnd: number = 35;
+
+    console.info("Calibration Coefficients");
+    coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
+    console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
+    msgArray.forEach(x => {
+        results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
+        console.info(`\t${x}: ${results}`);
+    });
+    console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
 }
