@@ -84,15 +84,14 @@ export function oxygen_sbe43(df: Table, colName: string, c: Object, scanRate: nu
     try {
         df.scan((idx) => {
             tau = c["Tau20"] * Math.exp( c["D1"] * p(idx) + c["D2"] * (t(idx) - 20));
-            dvdt = v(idx-1) ? (v(idx) - v(idx-1)) * scanRate : 0;     // ToDo Calculate over 2s window
+            // dvdt = v(idx-1) ? (v(idx) - v(idx-1)) * scanRate : 0;
             dvdt = 0;   // ToDo - Comment out - this temporariliy disables the tau correction
-
+            /* Per Seabird, dvdt = change in volts from the SBE43 over the change in time it takes
+                                   the instrument to travel 2 decibars during the profile.  */
             oxySol = oxygenSolubility(s(idx), t(idx));
             K = t(idx) + 273.15;
-            oxy[idx] = c["Soc"] * (v(idx) + c["offset"] + tau * dvdt) *
-                oxySol *
-                (1.0 + c["A"] * t(idx) + c["B"] * t(idx)**2 + c["C"] * t(idx)**3 ) *
-                Math.exp( c["E"] * p(idx) / K);
+            oxy[idx] = c["Soc"] * (v(idx) + c["offset"] + tau * dvdt) * oxySol *
+                (1.0 + c["A"] * t(idx) + c["B"] * t(idx)**2 + c["C"] * t(idx)**3 ) * Math.exp( c["E"] * p(idx) / K);
         }, (batch) => {
             s = col("Salinity (psu)").bind(batch);
             t = col("Temperature (degC)").bind(batch);

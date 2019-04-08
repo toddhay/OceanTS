@@ -1,4 +1,4 @@
-import { Table, RecordBatchWriter, RecordBatchStreamReader, RecordBatchFileReader, RecordBatchReader  } from "apache-arrow";
+import { Table, Vector, RecordBatchWriter, RecordBatchStreamReader, RecordBatchFileReader, RecordBatchReader  } from "apache-arrow";
 // import { JSONDataLoader } from 'apache-arrow/ipc/reader';
 import Axios from 'axios';
 import * as os from 'os';
@@ -43,7 +43,16 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
     const haulsJSONFile = path.join(desktopDir, "hauls.json");
 
     // Retrieve Trawl Survey Haul Characteristics data from FRAM Data Warehouse
-    let dwUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.json";
+    let filters = "tow_end_timestamp,tow_start_timestamp,vessel,trawl_id,latitude_hi_prec_dd,longitude_hi_prec_dd";
+    let selectionType = "csv";  // "json"
+    let baseUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.";
+    let dwUrl = baseUrl + selectionType + "?variables=" + filters;
+
+    let TEST: boolean = true;
+    if (TEST) dwUrl += "&year=2018";
+
+    console.info(`dwUrl = ${dwUrl}`);
+    process.exit(0);
     try {
         // WORKS for pulling down the haul data in either json or csv format
         // const response = await Axios.get(dwUrl);

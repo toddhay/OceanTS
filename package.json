@@ -18,9 +18,12 @@
     "lerna": "^3.13.1"
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^1.6.0",
+    "@typescript-eslint/parser": "^1.6.0",
     "apache-arrow": "^0.4.1",
     "assert": "^1.4.1",
     "axios": "^0.18.0",
+    "eslint": "^5.16.0",
     "fast-xml-parser": "^3.12.16",
     "mathjs": "^5.8.0",
     "moment": "^2.24.0",
