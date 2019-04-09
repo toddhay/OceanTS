@@ -24,7 +24,6 @@ async function bulkProcess() {
 
     const hexFile = path.resolve(path.join(dir, hexFileName));
     const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
-
     console.info(`hex file: ${hexFile}`);
 
     // Read an individiaul xmlcon file
@@ -37,21 +36,6 @@ async function bulkProcess() {
 
     // Parse hex file and convert to raw, decimal values in arrow data structure
     if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
-
-        // writeFileSync(newFile, )
-
-        // const dataTable = await response.arrayBuffer().then((buffer: any) => {
-        //     const newData = Table.from(new Uint8Array(buffer));
-        //     writeFile(newFile, new Uint8Array(buffer), (err) => {
-        //         if (err) throw err;
-        //         console.log('The file has been saved!');
-        //     });
-        //     console.log(newData.get(0).toJSON());
-        //     console.log(newData.get(0).toString());
-        //     console.log('rows = ' + newData.count());
-        //     return newData;
-        //     return Table.from(new Uint8Array(buffer));
-        // });
 
         // Parse the SBE 19plusV2 hex file
         console.info('Parsing SBE19plusV2 file');

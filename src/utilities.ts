@@ -1,9 +1,11 @@
-import { Table, Vector, RecordBatchWriter, RecordBatchStreamReader, RecordBatchFileReader, RecordBatchReader  } from "apache-arrow";
-// import { JSONDataLoader } from 'apache-arrow/ipc/reader';
+import { Table, DateVector, Float32Vector, Utf8Vector } from "apache-arrow";
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
-import { createWriteStream, readFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync } from 'fs';
+import { readFile } from "xlsx/types";
+import * as csv from 'csvtojson';
+import * as moment from 'moment';
 
 export function hex2dec(x: string): number {
     return parseInt(x, 16);
@@ -29,6 +31,24 @@ export function counts2frequency(counts: number): number {
 
 }
 
+export function jsonArray2ArrowTable(jsonData: Object[]): Table {
+    let header = Object.keys(jsonData[0]);
+    let dataArrays = [];
+    let temp: any = null;
+    header.forEach(h => {
+        temp = jsonData.map(x => x[h]);
+        if (['latitude_hi_prec_dd', 'longitude_hi_prec_dd'].includes(h)) {
+            dataArrays.push(Float32Vector.from(temp.map((x: any) => parseFloat(x))));
+        } else if (['tow_end_timestamp', 'tow_start_timestamp'].includes(h)) { 
+            dataArrays.push(DateVector.from(temp.map((x: any) => moment(x, "YYYY-MM-DD HH:mm:ss").toDate())));
+        } else {
+            dataArrays.push(Utf8Vector.from(temp));
+        } 
+    })
+    let df: Table = Table.new(dataArrays, header);
+    return df;
+}
+
 export async function getTrawlSurveyHaulData(): Promise<Table> {
     /*
 
@@ -37,47 +57,42 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
     https://github.com/apache/arrow/blob/master/js/bin/json-to-arrow.js
     */
 
+    // Retrieve Trawl Survey Haul Characteristics data from FRAM Data Warehouse
+    let baseUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.";
+    let selectionType = "csv";  // "json"
+    let variables = "latitude_hi_prec_dd,longitude_hi_prec_dd,tow_end_timestamp,tow_start_timestamp,trawl_id,vessel";
+    let filters = "year>=2016,year<=2018";
+    let dwUrl = baseUrl + selectionType + "?" + "filters=" + filters + "&" + "variables=" + variables;
+    console.info(`dwUrl = ${dwUrl}`);
 
     const desktopDir = path.join(os.homedir(), "Desktop");
     const haulsArrowFile = path.join(desktopDir, "hauls.arrow");
-    const haulsJSONFile = path.join(desktopDir, "hauls.json");
-
-    // Retrieve Trawl Survey Haul Characteristics data from FRAM Data Warehouse
-    let filters = "tow_end_timestamp,tow_start_timestamp,vessel,trawl_id,latitude_hi_prec_dd,longitude_hi_prec_dd";
-    let selectionType = "csv";  // "json"
-    let baseUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.";
-    let dwUrl = baseUrl + selectionType + "?variables=" + filters;
-
-    let TEST: boolean = true;
-    if (TEST) dwUrl += "&year=2018";
-
-    console.info(`dwUrl = ${dwUrl}`);
-    process.exit(0);
+    const haulsFile = path.join(desktopDir, "hauls." + selectionType);
     try {
-        // WORKS for pulling down the haul data in either json or csv format
-        // const response = await Axios.get(dwUrl);
-        // const data = response.data;
+        let data: any;
+        if (!existsSync(haulsFile)) {
+            const response = await Axios.get(dwUrl);
+            data = response.data;
+            if (selectionType === "json") {
+                writeFileSync(haulsFile, JSON.stringify(data));
+            } else {
+                writeFileSync(haulsFile, data);
+                data = await csv().fromString(data);    // Convert csv to an array of JSON objects
+            }
+            console.info(`data retrieved successfully`);
+        } else {
+            if (selectionType === "csv") {
+                data = await csv().fromFile(haulsFile);   // Convert csv to an array of JSON objects
+            } else {
+                data = readFileSync(haulsFile);
+            }
+        }
+        console.info(`haul data successfully opened ...`);
 
-        const reader = RecordBatchFileReader.from(readFileSync(haulsJSONFile));
-        console.info(`reader: ${JSON.stringify(reader)}`);
-        const data = Table.from(reader);
-        return data;
-        // const jsonToArrow = await reader.pipe(RecordBatchWriter.throughNode())
-        //     .pipe(createWriteStream(haulsArrowFile));
+        let df = jsonArray2ArrowTable(data);
+        console.info(`haul data successfully converted to an arrow table`);
 
-
-        // const response = await Axios.get(dwUrl);
-        // const reader = await RecordBatchReader.from(JSON.parse(response.data))
-        // const jsonToArrow = await reader.pipe(RecordBatchWriter.throughNode())
-        //     .pipe(createWriteStream(newFile));
-
-        // const response = await Axios.get(dwUrl, {
-        //     responseType: 'arraybuffer',
-        //     headers: {'Accept': 'text/csv' }
-        // }).then(response => {
-        //     const data = Table.from(new Uint8Array(response.data));
-        //     return data;
-        // });
+        return df;
     } catch (e) {
         console.error(`Error in retrieving trawl survey haul data: ${e}`);
     }
