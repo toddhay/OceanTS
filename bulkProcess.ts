@@ -1,26 +1,44 @@
-import { readFileSync, close, writeFileSync, writeFile, createReadStream } from 'fs';
+import { readFileSync, writeFileSync, readdirSync } from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import {Table, Null} from 'apache-arrow';
-import * as moment from 'moment';
-import * as math from 'mathjs';
 import * as parser from 'fast-xml-parser';
 import { parseHex } from './src/sbe19plusV2/parseHex';
-import { getTrawlSurveyHaulData } from './src/utilities';
+import { getTrawlSurveyHaulData, getHexFiles } from './src/utilities';
+import moment = require('moment');
 
 // Sample Data
 const dir = "./data/sbe19plusV2/";
 const hexFileName = "PORT_CTD5048_DO1360CT1460Op302_Hauls_1to5_21May2016.hex";
 const xmlconFileName = "SBE19plusV2_5048.xmlcon";
 
+const dataDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
+
+let start: any = null, end: any = null;
+
 async function bulkProcess() {
+
+    start = moment();
 
     // Retrieve the Trawl Survey Haul Data
     const hauls = await getTrawlSurveyHaulData();
     console.info(`first row: ${hauls.get(0)}`)
     console.info(`schema: ${hauls.schema.fields.map(x => x.name)}`);
-    process.exit(0);
+    // process.exit(0);
 
     // ToDo - Find all of the hex files and associated xmlcon files
+    console.info(`searching for hex: ${dataDir}`);
+    let hexFiles = await getHexFiles(dataDir);
+    const hexFileList = writeFileSync(path.join(os.homedir(), "Desktop", "hexFiles.txt"),
+        hexFiles.toString().split(",").join("\n")
+    );
+    console.info(`hex file count: ${hexFiles.length}`);
+    // console.info(`hexfiles: ${hexFiles}`);
+    end = moment();
+    let duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`Processing time: ${duration}s`);
+    process.exit(0);
+
 
     const hexFile = path.resolve(path.join(dir, hexFileName));
     const xmlconFile = path.resolve(path.join(dir, xmlconFileName));

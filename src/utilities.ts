@@ -2,10 +2,12 @@ import { Table, DateVector, Float32Vector, Utf8Vector } from "apache-arrow";
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
-import { readFileSync, existsSync, writeFileSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, readdirSync } from 'fs';
 import { readFile } from "xlsx/types";
 import * as csv from 'csvtojson';
 import * as moment from 'moment';
+import * as glob from 'glob';
+import * as fg from 'fast-glob';
 
 export function hex2dec(x: string): number {
     return parseInt(x, 16);
@@ -97,4 +99,16 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
         console.error(`Error in retrieving trawl survey haul data: ${e}`);
     }
     return null;
+}
+
+export async function getHexFiles(dataDir: string): Promise<Array<string>> {
+    let hexFiles: string[] = [];
+    hexFiles = fg.sync([dataDir + '/**/*.hex'], 
+        {nocase: true, ignore: [
+            dataDir + '/**/*test*.hex',
+            dataDir + '/**/*calibration*.hex',
+            dataDir + '/**/OrangeBoatCastTemplates/**/*.hex',
+            dataDir + '/**/BlueBoatCastTemplates/**/*.hex',
+    ]});
+    return hexFiles;
 }
