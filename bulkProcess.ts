@@ -4,7 +4,7 @@ import * as os from 'os';
 import {Table, Null} from 'apache-arrow';
 import * as parser from 'fast-xml-parser';
 import { parseHex } from './src/sbe19plusV2/parseHex';
-import { getTrawlSurveyHaulData, getHexFiles } from './src/utilities';
+import { getTrawlSurveyHaulData, getHexFiles, getXmlconFiles } from './src/utilities';
 import moment = require('moment');
 
 // Sample Data
@@ -29,20 +29,28 @@ async function bulkProcess() {
     // ToDo - Find all of the hex files and associated xmlcon files
     console.info(`searching for hex: ${dataDir}`);
     let hexFiles = await getHexFiles(dataDir);
-    const hexFileList = writeFileSync(path.join(os.homedir(), "Desktop", "hexFiles.txt"),
+    writeFileSync(path.join(os.homedir(), "Desktop", "hexFiles.txt"),
         hexFiles.toString().split(",").join("\n")
     );
     console.info(`hex file count: ${hexFiles.length}`);
-    // console.info(`hexfiles: ${hexFiles}`);
     end = moment();
     let duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`Processing time: ${duration}s`);
-    process.exit(0);
 
+    // Find all of the xmlcon files
+    console.info(`searching for xmlcon: ${dataDir}`);
+    let xmlconFiles = await getXmlconFiles(dataDir);
+    writeFileSync(path.join(os.homedir(), "Desktop", "xmlconList.txt"),
+        xmlconFiles.toString().split(",").join("\n")
+    );
+    console.info(`xmlcon file count: ${xmlconFiles.length}`);
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`Processing time: ${duration}s`);
 
-    const hexFile = path.resolve(path.join(dir, hexFileName));
-    const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
-    console.info(`hex file: ${hexFile}`);
+    // const hexFile = path.resolve(path.join(dir, hexFileName));
+    // const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
+    // console.info(`hex file: ${hexFile}`);
 
     // Read an individiaul xmlcon file
     const xmlconFileInMemory = readFileSync(xmlconFile, "utf8");

@@ -112,3 +112,12 @@ export async function getHexFiles(dataDir: string): Promise<Array<string>> {
     ]});
     return hexFiles;
 }
+
+export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {
+    let xmlconFiles: string[] = [];
+    xmlconFiles = fg.sync([dataDir + '/[0-9]{4}/[0-9]{4}_CTD_ConFiles_Raw/SBE19plusV2_*.xmlcon'], 
+        {nocase: true, ignore: [
+            dataDir + '/**/*_CTD_Leg\d_*/*.xmlcon',
+    ]});
+    return xmlconFiles;
+}
