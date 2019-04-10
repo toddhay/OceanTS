@@ -9,8 +9,12 @@ import { turbidity } from './equations/turbidity';
 import { fluorescence } from './equations/fluorescence';
 
 
-export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object,
-                        df: Table) {
+export async function convertToEngineeringUnits (instrument: Object,
+                                                 coefficients: Object[], 
+                                                 casts: Object, 
+                                                 voltageOffsets: Object,
+                                                 pumpDelay: number,
+                                                 df: Table) {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
     The data has already been converted to decimal units from hexadecimal units in the df input.  This
@@ -34,14 +38,20 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     df = await salinity(df);
 
     // Oxygen, SBE 43 (ml_per_l)
+
+    // ToDo Add Voltage 0 offset/slope
     df = await oxygen_sbe43(df, "External Voltage 0", coefficients[3]["OxygenSensor"], scanRate);
 
     // Fluorometer - "External Voltage 2"
-
+    // ToDo Add Voltage 0 offset/slope
+    
     // Turbidity - "External Voltage 3"
-
+    // ToDo Add Voltage 0 offset/slope
+    
     // Oxygen Optode, Aanderaa
     df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
+
+    // Split into separate hauls based on the casts
 
     // Retrieve Haul, Date/Time, Latitude, Longitude data from the FRAM Data Warehouse
     
@@ -62,4 +72,5 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
         console.info(`\t${x}: ${results}`);
     });
     console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
+    console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
 }

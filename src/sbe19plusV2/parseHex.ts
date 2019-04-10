@@ -21,6 +21,7 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
     let subparts: any = null;
     let pressureSensor = {}, extraSensors = {}, voltages = {}, casts = {};
     let castNum: string, castStartDate: string, castStartEnd: any, castStartNum: number, castEndNum: number, castAvg: number;
+    let voltageOffsets = {}, tempVoltage: string = "", pumpDelay: number = null;
 
     const parsingRules = [
         {"sensor": "Temperature", "variable": "Temperature A/D Counts", "size": 6, "data": null, "isADCount": true, "operations": null},
@@ -85,7 +86,12 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             samples = parseInt(subparts[1]);
         }
 
-        // ToDo - Parse mode + pump delay
+        if (line.startsWith("* mode =")) {
+            parts = line.split(", ");
+            if (parts.length === 3) {
+                pumpDelay = parseFloat(parts[2].replace("pump delay =", "").replace("sec", ""))
+            }
+        }
 
         // ToDo - Parse autorun + magnetic modee
 
@@ -121,6 +127,18 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             })
         }
 
+        if ((line.startsWith("* volt ")) && (line.includes("offset ="))) {
+            parts = line.split(":").map(s => s.replace("* volt", "Voltage".trim()));
+            tempVoltage = parts[0];
+            if (parts.length === 2) {
+                subparts = parts[1].split(",");
+                voltageOffsets[tempVoltage] = {
+                    "offset": parseFloat(subparts[0].replace("offset =", "").trim()),
+                    "slope": parseFloat(subparts[1].replace("slope =", "").trim())
+                }
+            }
+        }
+
         if (line.startsWith("* cast")) {
             // Parse casts
             parts = line.replace("* cast", "").trim().split(",");
@@ -140,8 +158,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
                 }
             }
         }
-
-        // ToDo - Parse Voltage Offsets
 
         if (line.startsWith('*END*')) {
             // Parse where the data lines start
@@ -189,6 +205,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        convertToEngineeringUnits(instrument, coefficients, casts, df);
+        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df);
     });
 }

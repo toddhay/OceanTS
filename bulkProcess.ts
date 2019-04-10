@@ -48,9 +48,9 @@ async function bulkProcess() {
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`Processing time: ${duration}s`);
 
-    // const hexFile = path.resolve(path.join(dir, hexFileName));
-    // const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
-    // console.info(`hex file: ${hexFile}`);
+    const hexFile = path.resolve(path.join(dir, hexFileName));
+    const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
+    console.info(`hex file: ${hexFile}`);
 
     // Read an individiaul xmlcon file
     const xmlconFileInMemory = readFileSync(xmlconFile, "utf8");
