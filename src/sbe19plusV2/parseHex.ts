@@ -2,13 +2,14 @@ import { createReadStream } from 'fs';
 import * as stream from 'stream';
 import { createInterface } from 'readline';
 import { Table, FloatVector, Dictionary } from 'apache-arrow';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as math from 'mathjs';
 import { hex2dec, counts2frequency } from '../utilities';
 import { convertToEngineeringUnits } from './convertResults';
 
 
-export function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[]) {
+export function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
+                         hauls?: Table) {
     /*
     hexFile: string - full path to a Seabird 19plusV2 hex file
     */
@@ -19,8 +20,8 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
     let samples: number = null;
     let parts: any = null;
     let subparts: any = null;
-    let pressureSensor = {}, extraSensors = {}, voltages = {}, casts = {};
-    let castNum: string, castStartDate: string, castStartEnd: any, castStartNum: number, castEndNum: number, castAvg: number;
+    let pressureSensor = {}, extraSensors = {}, voltages = {}, casts = [];
+    let castNum: string, castStartDate: Date, castStartEnd: Date, castStartNum: number, castEndNum: number, castAvg: number;
     let voltageOffsets = {}, tempVoltage: string = "", pumpDelay: number = null;
 
     const parsingRules = [
@@ -145,17 +146,19 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             if (parts.length >= 1) {
                 subparts = parts[0].split("samples").map(s => s.trim());
                 castNum = subparts[0].split(" ")[0];
-                castStartDate = subparts[0].replace(castNum, "").trim();
+                // console.info(`start Date: ${subparts[0].replace(castNum, "").trim()}`);
+                castStartDate = moment(subparts[0].replace(castNum, "").trim(), "DD MMMM YYYY HH:mm:ss").tz('America/Los_Angeles').toDate();
                 castStartEnd = subparts[1].split("to").map(s => s.trim());
                 castStartNum = parseInt(castStartEnd[0]);
                 castEndNum = parseInt(castStartEnd[1]);
                 castAvg = parseInt(parts[1].split("=").map(s => s.trim())[1]);
-                casts[castNum] = {
+                casts.push({
+                    "cast": parseInt(castNum),
                     "startDate": castStartDate,
                     "startNum": castStartNum,
                     "endNum": castEndNum,
                     "avg": castAvg
-                }
+                });
             }
         }
 
@@ -205,6 +208,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df);
+        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df, hauls);
     });
 }

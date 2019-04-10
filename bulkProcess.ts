@@ -65,7 +65,7 @@ async function bulkProcess() {
 
         // Parse the SBE 19plusV2 hex file
         console.info('Parsing SBE19plusV2 file');
-        await parseHex(hexFile, instrument, sensors);
+        await parseHex(hexFile, instrument, sensors, hauls);
     }
 
     // ToDo - Auto QA/QC the new arrow data structure

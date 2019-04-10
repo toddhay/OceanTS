@@ -29,6 +29,7 @@
     "fast-xml-parser": "^3.12.16",
     "mathjs": "^5.8.0",
     "moment": "^2.24.0",
+    "moment-timezone": "^0.5.23",
     "ts-node": "^8.0.3",
     "typescript": "^3.3.4000",
     "xlsx": "^0.14.1"

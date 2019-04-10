@@ -1,4 +1,5 @@
 import { Table, FloatVector, predicate, Float32Vector, Column, Field } from 'apache-arrow';
+import { col } from 'apache-arrow/compute/predicate';
 import { pressure } from './equations/pressure';
 import { temperature } from './equations/temperature';
 import { conductivity } from './equations/conductivity';
@@ -11,10 +12,11 @@ import { fluorescence } from './equations/fluorescence';
 
 export async function convertToEngineeringUnits (instrument: Object,
                                                  coefficients: Object[], 
-                                                 casts: Object, 
+                                                 casts: Object[], 
                                                  voltageOffsets: Object,
                                                  pumpDelay: number,
-                                                 df: Table) {
+                                                 df: Table,
+                                                 hauls?: Table) {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
     The data has already been converted to decimal units from hexadecimal units in the df input.  This
@@ -51,10 +53,20 @@ export async function convertToEngineeringUnits (instrument: Object,
     // Oxygen Optode, Aanderaa
     df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
 
-    // Split into separate hauls based on the casts
+    // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
+    if (hauls !== null) {
+        let dfSlice: Table = null, castStart: Date = null, haulsFound: Table = null;
+        casts.forEach(x => {
+            dfSlice = df.slice(x["startNum"] - 1, x["endNum"] - 1);
+            castStart = x["startDate"];
 
-    // Retrieve Haul, Date/Time, Latitude, Longitude data from the FRAM Data Warehouse
-    
+            // TODO - Fix finding the haul that matches the startDateTime of the current cast, this is not working
+            haulsFound = hauls.filter(col("tow_start_timestamp").ge(castStart));
+            console.info(`cast=${x['cast']} > start=${castStart} > haulsFound count=${haulsFound.length}`);
+            console.info(`\thaul: ${haulsFound.get(haulsFound.length-1)}`);
+        });
+    }
+
     // Depth - Requires Latitude data first
 
 
@@ -64,8 +76,8 @@ export async function convertToEngineeringUnits (instrument: Object,
     let results = [];
     let sliceStart: number = 30, sliceEnd: number = 35;
 
-    console.info("Calibration Coefficients");
-    coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
+    // console.info("Calibration Coefficients");
+    // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
     console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
     msgArray.forEach(x => {
         results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
@@ -73,4 +85,5 @@ export async function convertToEngineeringUnits (instrument: Object,
     });
     console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
     console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
+    // console.info(`Casts: ${JSON.stringify(casts)}`);
 }
