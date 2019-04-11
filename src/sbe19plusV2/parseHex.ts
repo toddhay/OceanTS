@@ -9,7 +9,7 @@ import { convertToEngineeringUnits } from './convertResults';
 
 
 export function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
-                         hauls?: Table) {
+                         hauls?: Table, vessel?: string) {
     /*
     hexFile: string - full path to a Seabird 19plusV2 hex file
     */
@@ -210,6 +210,6 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df, hauls);
+        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df, hauls, vessel);
     });
 }

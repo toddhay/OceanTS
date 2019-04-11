@@ -27,7 +27,7 @@ async function bulkProcess() {
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - retrieving haul data: ${duration}s`);
 
-    // ToDo - Find all of the hex files and associated xmlcon files
+    // Find all of the hex files
     console.info(`Searching for hex files: ${dataDir}`);
     start = moment();
     let hexFiles = await getHexFiles(dataDir);
@@ -38,6 +38,9 @@ async function bulkProcess() {
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - getting hex files: ${duration}s`);
+
+    // Specify the vessel of interest
+    let vessel: string = "Excalibur";
 
     // Find all of the xmlcon files
     console.info(`Searching for xmlcon files: ${dataDir}`);
@@ -67,7 +70,7 @@ async function bulkProcess() {
 
         // Parse the SBE 19plusV2 hex file
         console.info(`Parsing SBE19plusV2 hex file - ${hexFile}`);
-        await parseHex(hexFile, instrument, sensors, hauls);
+        await parseHex(hexFile, instrument, sensors, hauls, vessel);
     }
 
     // ToDo - Auto QA/QC the new arrow data structure

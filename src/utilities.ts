@@ -1,4 +1,5 @@
 import { Table, DateVector, Float32Vector, Utf8Vector } from "apache-arrow";
+import { col, custom } from 'apache-arrow/compute/predicate';
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
@@ -120,4 +121,34 @@ export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {
             dataDir + '/**/*_CTD_Leg\d_*/*.xmlcon',
     ]});
     return xmlconFiles;
+}
+
+export async function mergeLatitudeIntoCasts(hauls: Table, casts: Object[], 
+                                             vessel: string,
+                                             scanRate: number): Promise<Array<Object>> {
+    if (hauls !== null) {
+        let castStart: Date = null, castEnd: Date = null;
+        let haulID: any = null, lat: any = null, lon: any = null;
+        casts.forEach(x => {
+            castStart = x["startDate"];
+            castEnd = moment(castStart).add((x["endNum"] - x["startNum"]) / scanRate, 'seconds').toDate();
+            const haulsDateFilter = custom(i => {
+                let haulStart = hauls.getColumn("tow_start_timestamp").get(i);
+                let haulEnd = hauls.getColumn("tow_end_timestamp").get(i);
+                return haulStart < castEnd && haulEnd > castStart;
+            }, b => 1);
+
+            hauls.filter(haulsDateFilter.and(col("vessel").eq(vessel)))
+                .scan((idx) => {
+                    x["latitude"] = lat(idx);
+                    x["longitude"] = lon(idx);
+                    x["haulID"] = haulID(idx);
+                }, (batch) => {
+                    lat = col('latitude_hi_prec_dd').bind(batch);
+                    lon = col('longitude_hi_prec_dd').bind(batch);
+                    haulID = col('trawl_id').bind(batch);
+                });
+        });
+    }  
+    return casts;
 }
