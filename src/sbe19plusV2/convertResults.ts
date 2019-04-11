@@ -113,6 +113,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
 
     // Depth - Requires Latitude data first
+    df = await depth(df, );
 
 
     // Display the results

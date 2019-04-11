@@ -4,18 +4,33 @@ import { col } from 'apache-arrow/compute/predicate';
 import * as assert from 'assert';
 
 
-export function depth(df: Table, latitude: number, pressure: number): Table {
+export function depth(df: Table, latitudes: Object, casts: Object, type: string = "fresh water"): Table {
     /* 
         Function to calculate the Depth (m)
+
+    if type == "fresh water":
+        d = pressure * 1.019716
+
+    else:
+        x = (math.sin(latitude / 57.29578))**2
+        gr = 9.780318 * (1.0 + (5.2788e-3 + 2.36e-5 * x) * x) + 1.092e-6 * pressure
+        d = (((-1.82e-15 * pressure + 2.279e-10) * pressure - 2.2512e-5) * pressure + 9.72659) * pressure
+        if gr:
+            d /= gr
+
+    return d
+
+
     */
 
     let depth = new Float32Array(df.length);
-    let v: any = null, p: any = null;
+    let p: any = null, x: number = null, gr: number = null;
 
     df.scan((idx) => {
+        // TODO Implement the proper depth calculation
+        // x = (math.sin())
         depth[idx] = 1;
     }, (batch) => {
-        v = col(colName).bind(batch);
         p = col("Pressure (dbars)").bind(batch);
     });
     let newCol: string = "Depth (m)";
