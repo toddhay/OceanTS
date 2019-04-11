@@ -65,7 +65,7 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
     let variables = "latitude_hi_prec_dd,longitude_hi_prec_dd,tow_end_timestamp,tow_start_timestamp,trawl_id,vessel";
     let filters = "year>=2016,year<=2018";
     let dwUrl = baseUrl + selectionType + "?" + "filters=" + filters + "&" + "variables=" + variables;
-    console.info(`dwUrl = ${dwUrl}`);
+    // console.info(`\tdwUrl = ${dwUrl}`);
 
     const desktopDir = path.join(os.homedir(), "Desktop");
     const haulsArrowFile = path.join(desktopDir, "hauls.arrow");
@@ -81,7 +81,7 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
                 writeFileSync(haulsFile, data);
                 data = await csv().fromString(data);    // Convert csv to an array of JSON objects
             }
-            console.info(`data retrieved successfully`);
+            console.info(`\tdata retrieved successfully`);
         } else {
             if (selectionType === "csv") {
                 data = await csv().fromFile(haulsFile);   // Convert csv to an array of JSON objects
@@ -89,14 +89,14 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
                 data = readFileSync(haulsFile);
             }
         }
-        console.info(`haul data successfully opened ...`);
+        console.info(`\thaul data successfully opened ...`);
 
         let df = jsonArray2ArrowTable(data);
-        console.info(`haul data successfully converted to an arrow table`);
+        console.info(`\thaul data successfully converted to an arrow table`);
 
         return df;
     } catch (e) {
-        console.error(`Error in retrieving trawl survey haul data: ${e}`);
+        console.error(`\tError in retrieving trawl survey haul data: ${e}`);
     }
     return null;
 }

@@ -14,43 +14,45 @@ const xmlconFileName = "SBE19plusV2_5048.xmlcon";
 
 const dataDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
 
-let start: any = null, end: any = null;
+let start: any = null, end: any = null, duration: any = null;
 
 async function bulkProcess() {
 
-    start = moment();
 
     // Retrieve the Trawl Survey Haul Data
+    console.info(`Retrieving haul data`)
+    start = moment();
     const hauls = await getTrawlSurveyHaulData();
-    console.info(`first row: ${hauls.get(0)}`)
-    console.info(`schema: ${hauls.schema.fields.map(x => x.name)}`);
-    // process.exit(0);
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`\tProcessing time - retrieving haul data: ${duration}s`);
 
     // ToDo - Find all of the hex files and associated xmlcon files
-    console.info(`searching for hex: ${dataDir}`);
+    console.info(`Searching for hex files: ${dataDir}`);
+    start = moment();
     let hexFiles = await getHexFiles(dataDir);
     writeFileSync(path.join(os.homedir(), "Desktop", "hexFiles.txt"),
         hexFiles.toString().split(",").join("\n")
     );
-    console.info(`hex file count: ${hexFiles.length}`);
+    console.info(`\thex file count: ${hexFiles.length}`);
     end = moment();
-    let duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`Processing time: ${duration}s`);
+    duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`\tProcessing time - getting hex files: ${duration}s`);
 
     // Find all of the xmlcon files
-    console.info(`searching for xmlcon: ${dataDir}`);
+    console.info(`Searching for xmlcon files: ${dataDir}`);
+    start = moment();
     let xmlconFiles = await getXmlconFiles(dataDir);
     writeFileSync(path.join(os.homedir(), "Desktop", "xmlconList.txt"),
         xmlconFiles.toString().split(",").join("\n")
     );
-    console.info(`xmlcon file count: ${xmlconFiles.length}`);
+    console.info(`\txmlcon file count: ${xmlconFiles.length}`);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`Processing time: ${duration}s`);
+    console.info(`\tProcessing time - getting xmlcon files: ${duration}s`);
 
     const hexFile = path.resolve(path.join(dir, hexFileName));
     const xmlconFile = path.resolve(path.join(dir, xmlconFileName));
-    console.info(`hex file: ${hexFile}`);
 
     // Read an individiaul xmlcon file
     const xmlconFileInMemory = readFileSync(xmlconFile, "utf8");
@@ -64,7 +66,7 @@ async function bulkProcess() {
     if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
 
         // Parse the SBE 19plusV2 hex file
-        console.info('Parsing SBE19plusV2 file');
+        console.info(`Parsing SBE19plusV2 hex file - ${hexFile}`);
         await parseHex(hexFile, instrument, sensors, hauls);
     }
 

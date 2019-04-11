@@ -20,7 +20,9 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     function relies heavily upon the equations found in the equations folder for the instrument-specific 
     conversion equations
     */
-   
+    console.info(`Converting to Engineering Units`);
+    let start = moment();
+
     // Scan Rate - use for the temporal + spatial data integration
     let scanRate = 4;
 
@@ -50,10 +52,18 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     // Oxygen Optode, Aanderaa
     df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
 
+    let end = moment();
+    let duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`\tProcessing time - converting to engineering units: ${duration}s`);
+
+
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
+    console.info(`Matching haul latitude/longitude data to cast`);
+    start = moment();
     if (hauls !== null) {
         let dfSlice: Table = null, castStart: Date = null, haulsFound: any = null, castEnd: Date = null;
         let castVessel: string = "Excalibur";
+        let castLat: number = null, castLon: number = null, castHaul: string = "";
         let haulID: any = null, lat: any = null, lon: any = null, towStart: any = null, towEnd: any = null, vessel: any = null;
         let results = [];
         casts.forEach(x => {
@@ -70,37 +80,37 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
                 let haulStart = hauls.getColumn("tow_start_timestamp").get(i);
                 let haulEnd = hauls.getColumn("tow_end_timestamp").get(i);
                 return haulStart < castEnd && haulEnd > castStart;
-
-                // return ((haulStart <= castStart && haulEnd >= castStart) || 
-                //         (haulStart <= castEnd && haulEnd >= castEnd) ||
-                //         (haulStart >= castStart && haulEnd <= castEnd) ||
-                //         (haulStart <= castStart && haulEnd >= castEnd));
             }, b => 1);
 
             haulsFound = hauls.filter(haulsDateFilter.and(col("vessel").eq(castVessel)))
                 .scan((idx) => {
-                    results.push({
-                        'lat': lat(idx),
-                        'lon': lon(idx),
-                        'vessel': vessel(idx),
-                        'haulID': haulID(idx),
-                        'haulStart': towStart(idx),
-                        'haulEnd': towEnd(idx)
-                    });
+                    castLat = lat(idx);
+                    castLon = lon(idx);
+                    castHaul = haulID(idx);
+                    // results.push({
+                    //     'lat': lat(idx),
+                    //     'lon': lon(idx),
+                    //     'vessel': vessel(idx),
+                    //     'haulID': haulID(idx),
+                    //     'haulStart': towStart(idx),
+                    //     'haulEnd': towEnd(idx)
+                    // });
                 }, (batch) => {
                     lat = col('latitude_hi_prec_dd').bind(batch);
                     lon = col('longitude_hi_prec_dd').bind(batch);
                     haulID = col('trawl_id').bind(batch);
-                    vessel = col('vessel').bind(batch);
-                    towStart = col('tow_start_timestamp').bind(batch);
-                    towEnd = col('tow_end_timestamp').bind(batch);
+                    // vessel = col('vessel').bind(batch);
+                    // towStart = col('tow_start_timestamp').bind(batch);
+                    // towEnd = col('tow_end_timestamp').bind(batch);
                 });
-            console.info(`cast=${x['cast']}, castStart = ${castStart},  castEnd = ${castEnd},  sample count: ${x['endNum'] - x['startNum']}`);
-        });
-        results.forEach(x => {
-            console.info(`\t${JSON.stringify(x)}`);
+            console.info(`\tcast=${x['cast']}, castStart = ${castStart},  castEnd = ${castEnd},  sample count: ${x['endNum'] - x['startNum']}`);
+            console.info(`\t\thaulID = ${castHaul}, lat = ${castLat}, lon = ${castLon}`);
         });
     }
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`\tProcessing time - matching haul lat/lons to casts: ${duration}s`);
+
 
     // Depth - Requires Latitude data first
 

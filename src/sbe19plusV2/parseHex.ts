@@ -77,7 +77,7 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             if (lineParts.length === 2) {
                 serialNumber = lineParts[1].split(' ')[0];
                 endDateTime = lineParts[1].replace(serialNumber, "").trim()
-                console.info('endDateTime: ' + endDateTime);
+                console.info('\tendDateTime: ' + endDateTime);
             }
         }
 
@@ -200,7 +200,9 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
 
     lineReader.on('close', function() {
         let end = moment();
-        let duration = moment.duration(end.diff(start));
+        let duration = moment.duration(end.diff(start)).asSeconds();
+        console.info(`\tProcessing time - parsing hex file: ${duration}s`);
+
         let dataArrays = [];
         let tempArray: any = null;
         schema.forEach(x => {
