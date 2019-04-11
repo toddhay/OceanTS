@@ -8,14 +8,11 @@ import { oxygen_sbe43, oxygen_optode } from './equations/oxygen';
 import { depth} from './equations/depth';
 import { turbidity } from './equations/turbidity';
 import { fluorescence } from './equations/fluorescence';
+import * as moment from 'moment';
 
 
-export async function convertToEngineeringUnits (instrument: Object,
-                                                 coefficients: Object[], 
-                                                 casts: Object[], 
-                                                 voltageOffsets: Object,
-                                                 pumpDelay: number,
-                                                 df: Table,
+export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
+                                                 voltageOffsets: Object, pumpDelay: number, df: Table,
                                                  hauls?: Table) {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
@@ -55,14 +52,28 @@ export async function convertToEngineeringUnits (instrument: Object,
 
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
     if (hauls !== null) {
-        let dfSlice: Table = null, castStart: Date = null, haulsFound: Table = null;
+        let dfSlice: Table = null, castStart: Date = null, haulsFound: any = null, castEnd: Date = null, 
+            filter1: any = null, filter2: any = null, haulStart: any = null, haulEnd: any = null;
         casts.forEach(x => {
             dfSlice = df.slice(x["startNum"] - 1, x["endNum"] - 1);
             castStart = x["startDate"];
+            castEnd = moment(castStart).add((x["endNum"] - x["startNum"]) / scanRate, 'seconds').toDate();
 
             // TODO - Fix finding the haul that matches the startDateTime of the current cast, this is not working
-            haulsFound = hauls.filter(col("tow_start_timestamp").ge(castStart));
+            filter1 = col("tow_start_timestamp").le(castStart).and(col("tow_end_timestamp").ge(castStart));
+            filter2 = col("tow_start_timestamp").le(castEnd).and(col("tow_end_timestamp").ge(castEnd));
+
+            haulsFound = hauls.filter(filter1);
+
+            // haulsFound = hauls.filter(filter1)
+            //     .scan((idx) => {
+            //         haulsFound.push()
+            //     }, (batch) => {
+            //         haulStart = col("tow_start_timestamp").bind(batch);
+            //         haulEnd = col("tow_end_timestamp").bind(batch);
+            //     });
             console.info(`cast=${x['cast']} > start=${castStart} > haulsFound count=${haulsFound.length}`);
+            // console.info(`\tcastStart = ${castStart},  castEnd = ${castEnd},  sample count: ${x['endNum'] - x['startNum']}`);
             console.info(`\thaul: ${haulsFound.get(haulsFound.length-1)}`);
         });
     }
@@ -78,12 +89,12 @@ export async function convertToEngineeringUnits (instrument: Object,
 
     // console.info("Calibration Coefficients");
     // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
-    console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
+    // console.info(`Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
     msgArray.forEach(x => {
         results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
-        console.info(`\t${x}: ${results}`);
+        // console.info(`\t${x}: ${results}`);
     });
-    console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
-    console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
+    // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
+    // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
     // console.info(`Casts: ${JSON.stringify(casts)}`);
 }

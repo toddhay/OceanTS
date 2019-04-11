@@ -1,4 +1,5 @@
 import { Table, DateVector, Float32Vector, Utf8Vector } from "apache-arrow";
+import { custom } from 'apache-arrow/compute/predicate';
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
@@ -120,4 +121,8 @@ export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {
             dataDir + '/**/*_CTD_Leg\d_*/*.xmlcon',
     ]});
     return xmlconFiles;
+}
+
+export function haulsDateFilter() {
+    
 }
