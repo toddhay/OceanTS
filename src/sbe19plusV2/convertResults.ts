@@ -1,5 +1,5 @@
-import { Table, FloatVector, predicate, Float32Vector, Column, Field } from 'apache-arrow';
-import { col } from 'apache-arrow/compute/predicate';
+import { Table } from 'apache-arrow';
+import { col, custom } from 'apache-arrow/compute/predicate';
 import { pressure } from './equations/pressure';
 import { temperature } from './equations/temperature';
 import { conductivity } from './equations/conductivity';
@@ -52,29 +52,53 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
     if (hauls !== null) {
-        let dfSlice: Table = null, castStart: Date = null, haulsFound: any = null, castEnd: Date = null, 
-            filter1: any = null, filter2: any = null, haulStart: any = null, haulEnd: any = null;
+        let dfSlice: Table = null, castStart: Date = null, haulsFound: any = null, castEnd: Date = null;
+        let castVessel: string = "Excalibur";
+        let haulID: any = null, lat: any = null, lon: any = null, towStart: any = null, towEnd: any = null, vessel: any = null;
+        let results = [];
         casts.forEach(x => {
             dfSlice = df.slice(x["startNum"] - 1, x["endNum"] - 1);
             castStart = x["startDate"];
             castEnd = moment(castStart).add((x["endNum"] - x["startNum"]) / scanRate, 'seconds').toDate();
 
             // TODO - Fix finding the haul that matches the startDateTime of the current cast, this is not working
-            filter1 = col("tow_start_timestamp").le(castStart).and(col("tow_end_timestamp").ge(castStart));
-            filter2 = col("tow_start_timestamp").le(castEnd).and(col("tow_end_timestamp").ge(castEnd));
+            // let filter1: any = null, filter2: any = null;
+            // filter1 = col("tow_start_timestamp").le(castStart).and(col("tow_end_timestamp").ge(castStart));
+            // filter2 = col("tow_start_timestamp").le(castEnd).and(col("tow_end_timestamp").ge(castEnd));
 
-            haulsFound = hauls.filter(filter1);
+            const haulsDateFilter = custom(i => {
+                let haulStart = hauls.getColumn("tow_start_timestamp").get(i);
+                let haulEnd = hauls.getColumn("tow_end_timestamp").get(i);
+                return haulStart < castEnd && haulEnd > castStart;
 
-            // haulsFound = hauls.filter(filter1)
-            //     .scan((idx) => {
-            //         haulsFound.push()
-            //     }, (batch) => {
-            //         haulStart = col("tow_start_timestamp").bind(batch);
-            //         haulEnd = col("tow_end_timestamp").bind(batch);
-            //     });
-            console.info(`cast=${x['cast']} > start=${castStart} > haulsFound count=${haulsFound.length}`);
-            // console.info(`\tcastStart = ${castStart},  castEnd = ${castEnd},  sample count: ${x['endNum'] - x['startNum']}`);
-            console.info(`\thaul: ${haulsFound.get(haulsFound.length-1)}`);
+                // return ((haulStart <= castStart && haulEnd >= castStart) || 
+                //         (haulStart <= castEnd && haulEnd >= castEnd) ||
+                //         (haulStart >= castStart && haulEnd <= castEnd) ||
+                //         (haulStart <= castStart && haulEnd >= castEnd));
+            }, b => 1);
+
+            haulsFound = hauls.filter(haulsDateFilter.and(col("vessel").eq(castVessel)))
+                .scan((idx) => {
+                    results.push({
+                        'lat': lat(idx),
+                        'lon': lon(idx),
+                        'vessel': vessel(idx),
+                        'haulID': haulID(idx),
+                        'haulStart': towStart(idx),
+                        'haulEnd': towEnd(idx)
+                    });
+                }, (batch) => {
+                    lat = col('latitude_hi_prec_dd').bind(batch);
+                    lon = col('longitude_hi_prec_dd').bind(batch);
+                    haulID = col('trawl_id').bind(batch);
+                    vessel = col('vessel').bind(batch);
+                    towStart = col('tow_start_timestamp').bind(batch);
+                    towEnd = col('tow_end_timestamp').bind(batch);
+                });
+            console.info(`cast=${x['cast']}, castStart = ${castStart},  castEnd = ${castEnd},  sample count: ${x['endNum'] - x['startNum']}`);
+        });
+        results.forEach(x => {
+            console.info(`\t${JSON.stringify(x)}`);
         });
     }
 
