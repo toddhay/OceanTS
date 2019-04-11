@@ -152,3 +152,49 @@ export async function mergeLatitudeIntoCasts(hauls: Table, casts: Object[],
     }  
     return casts;
 }
+
+export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: number = 4): Promise<Table> {
+    /* Function to add haul ID, latitude, longitude, date/time columns to the table
+        df - arrow table
+        casts - array of cast objects that contain the haul information
+    */
+    let latitude = new Float32Array(df.length);
+    let longitude = new Float32Array(df.length);
+    let haulID = new Array(df.length);
+    let dateTime = new Array(df.length);
+    let filteredCasts: Object[] = null;
+    let timeShift: number = null;
+
+    df.scan((idx) => {
+        filteredCasts = casts.filter(x => {
+            return idx >= x['startNum'] - 1 && idx < x['endNum'];
+        })
+        latitude[idx] = filteredCasts[0]["latitude"];
+        longitude[idx] = filteredCasts[0]["longitude"];
+        haulID[idx] = filteredCasts[0]["haulID"];
+        dateTime[idx] = moment(filteredCasts[0]["startDate"]).add(idx/scanRate, "seconds")
+            .format("YYYYMMDD HH:mm:ss.SSS");      
+    }, (batch) => {} );
+    let newCols = ["Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"];
+    df = df.assign(Table.new([Float32Vector.from(latitude), 
+                              Float32Vector.from(longitude),
+                              Utf8Vector.from(haulID), 
+                              Utf8Vector.from(dateTime)], newCols));
+    return df;
+}
+
+export async function saveToFile(df: Table, format: string = "csv", filename: string) {
+    /* Function to save an arrow table down to disk
+
+    possible formats include:  csv, xlsx, arrow
+
+    */
+    let formats = ["csv", "xlsx", "arrow"];
+    if (!formats.includes(format)) {
+        console.info(`Save format is not supported: ${format}, not saving to disk`);
+        return;
+    } 
+
+
+
+}

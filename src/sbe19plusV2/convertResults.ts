@@ -8,7 +8,7 @@ import { depth} from './equations/depth';
 import { turbidity } from './equations/turbidity';
 import { fluorescence } from './equations/fluorescence';
 import * as moment from 'moment';
-import { mergeLatitudeIntoCasts } from '../utilities';
+import { mergeLatitudeIntoCasts, addHaulInfoToTable } from '../utilities';
 
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
@@ -75,10 +75,19 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - calculating depth (m): ${duration}s`);
 
+    // Add haul ID, latitude, longitude, date/time into the arrow table
+    console.info(`Add haul ID, latitude, longitude, and date/times into the arrow table`);
+    start = moment();
+    df = await addHaulInfoToTable(df, casts);
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    console.info(`\tProcessing time - adding haul info to table: ${duration}s`);
+
+
     // Save the results to a csv file
     console.info(`Saving data to a csv file`);
     start = moment();
-    await 
+    // df = await  
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - saving result to a file: ${duration}s`);
@@ -86,10 +95,13 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
     // Display the results
     let msgArray = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
-        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)"];
+        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
+        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"
+    ];
     let results = [];
 
-    let sliceSize: number = 5, sliceStart: number = df.length - sliceSize, 
+    let sliceSize: number = 5, 
+        sliceStart: number = 0, //df.length - sliceSize, 
         sliceEnd: number = sliceStart + sliceSize;
 
     // console.info("Calibration Coefficients");
