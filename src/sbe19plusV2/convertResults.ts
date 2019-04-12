@@ -89,16 +89,16 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     console.info(`Saving data to a csv file`);
     start = moment();
     let filename = path.join(os.homedir(), "Desktop", "test.csv");
-    await saveToFile(df, "csv", filename);
+    let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
+        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
+        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"
+    ];
+    await saveToFile(df, "csv", filename, outputColumns);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - saving result to a file: ${duration}s`);
 
     // Display the results
-    let msgArray = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
-        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
-        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"
-    ];
     let results = [];
 
     let sliceSize: number = 5, 
@@ -108,7 +108,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     // console.info("Calibration Coefficients");
     // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
     console.info(`Results - Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
-    msgArray.forEach(x => {
+    outputColumns.forEach(x => {
         results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
         console.info(`\t${x}: ${results}`);
     });

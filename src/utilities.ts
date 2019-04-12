@@ -3,12 +3,12 @@ import { col, custom } from 'apache-arrow/compute/predicate';
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
-import { readFileSync, existsSync, writeFileSync, readdirSync } from 'fs';
+import { readFileSync, existsSync, writeFileSync, createWriteStream } from 'fs';
 import { readFile } from "xlsx/types";
 import * as csv from 'csvtojson';
 import * as moment from 'moment';
-import * as glob from 'glob';
 import * as fg from 'fast-glob';
+import * as csvWriter from 'csv-write-stream';
 
 export function hex2dec(x: string): number {
     return parseInt(x, 16);
@@ -183,7 +183,8 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
     return df;
 }
 
-export async function saveToFile(df: Table, format: string = "csv", filename: string) {
+export async function saveToFile(df: Table, format: string = "csv", filename: string,
+                                 outputColumns: string[]) {
     /* Function to save an arrow table down to disk
 
     possible formats include:  csv, xlsx, arrow
@@ -197,9 +198,28 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
 
     let desktop = path.join(os.homedir(), "Desktop");
     filename = "test.csv";
+    let file = path.join(desktop, filename);
 
-    let output = df.toArray();
-    console.info(`\toutput type: ${typeof(output)}`);
+    // Specify only the columns of interest
+    let dfCols = [];
+    outputColumns.forEach(x => {
+        dfCols.push(df.getColumn(x));
+    })
+    df = Table.new(dfCols, outputColumns);
+    let header = df.schema.fields.map(x => x.name);
 
+    if (format === "csv") {
+        let writeStream = createWriteStream(file);
+        let writer = csvWriter({"headers": header});
+        writer.pipe(writeStream);
+        for (let i=0; i<df.length; i++) {
+            writer.write(df.get(i).toJSON());
+        }
+        writer.end();    
 
+    } else if (format === "xlsx") {
+
+    } else if (format === "arrow") {
+
+    }
 }
