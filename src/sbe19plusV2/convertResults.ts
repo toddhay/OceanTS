@@ -8,7 +8,9 @@ import { depth} from './equations/depth';
 import { turbidity } from './equations/turbidity';
 import { fluorescence } from './equations/fluorescence';
 import * as moment from 'moment';
-import { mergeLatitudeIntoCasts, addHaulInfoToTable } from '../utilities';
+import * as os from 'os';
+import * as path from 'path';
+import { mergeLatitudeIntoCasts, addHaulInfoToTable, saveToFile } from '../utilities';
 
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
@@ -83,15 +85,14 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - adding haul info to table: ${duration}s`);
 
-
     // Save the results to a csv file
     console.info(`Saving data to a csv file`);
     start = moment();
-    // df = await  
+    let filename = path.join(os.homedir(), "Desktop", "test.csv");
+    await saveToFile(df, "csv", filename);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\tProcessing time - saving result to a file: ${duration}s`);
-
 
     // Display the results
     let msgArray = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",

@@ -18,7 +18,6 @@ let start: any = null, end: any = null, duration: any = null;
 
 async function bulkProcess() {
 
-
     // Retrieve the Trawl Survey Haul Data
     console.info(`Retrieving haul data`)
     start = moment();

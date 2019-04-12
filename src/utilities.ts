@@ -195,6 +195,11 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
         return;
     } 
 
+    let desktop = path.join(os.homedir(), "Desktop");
+    filename = "test.csv";
+
+    let output = df.toArray();
+    console.info(`\toutput type: ${typeof(output)}`);
 
 
 }
