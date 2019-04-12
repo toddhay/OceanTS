@@ -111,6 +111,7 @@ export async function getHexFiles(dataDir: string): Promise<Array<string>> {
             dataDir + '/**/OrangeBoatCastTemplates/**/*.hex',
             dataDir + '/**/BlueBoatCastTemplates/**/*.hex',
     ]});
+    hexFiles = hexFiles.toString().split(",");
     return hexFiles;
 }
 
@@ -120,6 +121,7 @@ export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {
         {nocase: true, ignore: [
             dataDir + '/**/*_CTD_Leg\d_*/*.xmlcon',
     ]});
+    xmlconFiles = xmlconFiles.toString().split(",");
     return xmlconFiles;
 }
 
@@ -204,10 +206,6 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
         return;
     } 
 
-    let desktop = path.join(os.homedir(), "Desktop");
-    filename = "test.csv";
-    let file = path.join(desktop, filename);
-
     // Specify only the columns of interest
     let dfCols = [];
     outputColumns.forEach(x => {
@@ -217,7 +215,7 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
     let header = df.schema.fields.map(x => x.name);
 
     if (format === "csv") {
-        let writeStream = createWriteStream(file);
+        let writeStream = createWriteStream(filename);
         let writer = csvWriter({"headers": header});
         writer.pipe(writeStream);
         for (let i=0; i<df.length; i++) {

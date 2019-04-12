@@ -15,14 +15,14 @@ import { mergeLatitudeIntoCasts, addHaulInfoToTable, saveToFile } from '../utili
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
                                                  voltageOffsets: Object, pumpDelay: number, df: Table,
-                                                 hauls?: Table, vessel?: string) {
+                                                 outputFile: string, hauls?: Table, vessel?: string) {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
     The data has already been converted to decimal units from hexadecimal units in the df input.  This
     function relies heavily upon the equations found in the equations folder for the instrument-specific 
     conversion equations
     */
-    console.info(`Converting to Engineering Units`);
+    console.info(`\tConverting to Engineering Units`);
     let start = moment();
 
     // Scan Rate - use for the temporal + spatial data integration
@@ -56,10 +56,10 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
     let end = moment();
     let duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\tProcessing time - converting to engineering units: ${duration}s`);
+    console.info(`\t\tProcessing time - converting to engineering units: ${duration}s`);
 
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
-    console.info(`Matching haul latitude/longitude data to cast`);
+    console.info(`\tMatching haul latitude/longitude data to cast`);
     start = moment();
     casts = await mergeLatitudeIntoCasts(hauls, casts, vessel, scanRate);
     end = moment();
@@ -67,36 +67,35 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     casts.forEach(x => {
         console.info(`\t${JSON.stringify(x)}`);
     })
-    console.info(`\tProcessing time - matching haul lat/lons to casts: ${duration}s`);
+    console.info(`\t\tProcessing time - matching haul lat/lons to casts: ${duration}s`);
 
     // Depth - Requires Latitude data first
-    console.info(`Calculating Depth (m)`);
+    console.info(`\tCalculating Depth (m)`);
     start = moment();
     df = await depth(df, casts);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\tProcessing time - calculating depth (m): ${duration}s`);
+    console.info(`\t\tProcessing time - calculating depth (m): ${duration}s`);
 
     // Add haul ID, latitude, longitude, date/time into the arrow table
-    console.info(`Add haul ID, latitude, longitude, and date/times into the arrow table`);
+    console.info(`\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
     start = moment();
     df = await addHaulInfoToTable(df, casts);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\tProcessing time - adding haul info to table: ${duration}s`);
+    console.info(`\t\tProcessing time - adding haul info to table: ${duration}s`);
 
     // Save the results to a csv file
-    console.info(`Saving data to a csv file`);
+    console.info(`\tSaving data to a csv file`);
     start = moment();
-    let filename = path.join(os.homedir(), "Desktop", "test.csv");
     let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
         "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
         "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"
     ];
-    await saveToFile(df, "csv", filename, outputColumns);
+    await saveToFile(df, "csv", outputFile, outputColumns);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\tProcessing time - saving result to a file: ${duration}s`);
+    console.info(`\t\tProcessing time - saving result to a file: ${duration}s`);
 
     // Display the results
     let results = [];
@@ -107,10 +106,10 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
 
     // console.info("Calibration Coefficients");
     // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
-    console.info(`Results - Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
+    // console.info(`Results - Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
     outputColumns.forEach(x => {
         results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
-        console.info(`\t${x}: ${results}`);
+        // console.info(`\t${x}: ${results}`);
     });
     // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
     // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);

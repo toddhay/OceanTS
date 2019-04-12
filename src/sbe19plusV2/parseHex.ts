@@ -1,19 +1,17 @@
 import { createReadStream } from 'fs';
-import * as stream from 'stream';
 import { createInterface } from 'readline';
 import { Table, FloatVector, Dictionary } from 'apache-arrow';
 import * as moment from 'moment-timezone';
 import * as math from 'mathjs';
-import { hex2dec, counts2frequency } from '../utilities';
+import { hex2dec } from '../utilities';
 import { convertToEngineeringUnits } from './convertResults';
 
 
-export function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
-                         hauls?: Table, vessel?: string) {
+export async function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
+                         outputFile: string, hauls?: Table, vessel?: string) {
     /*
     hexFile: string - full path to a Seabird 19plusV2 hex file
     */
-
     let dataStartLine: number = -1, lineNum: number = -1;
     let serialNumber: any = null;
     let endDateTime: any = null;
@@ -61,14 +59,16 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
 
     let start = moment();
 
-    // const output = new stream.PassThrough({ objectMode: true });
-    let output: any = null;
+    // let output = new stream.PassThrough({ objectMode: true });
+    // let output: any = null;
 
     const line_counter = ((i = 0) => () => ++i)();
-    const lineReader = createInterface({ input: createReadStream(hexFile) });
+    const rl = createInterface({ input: createReadStream(hexFile) });
 
-    lineReader.on('line', (line, lineNum = line_counter()) => {
-
+    rl.on('line', (line: string, lineNum: number = line_counter()) => {
+    for await (const line of rl) {   // rl[Symbol.asyncIterator]()) {
+   
+        console.info(`line = ${line}`);
         // if ((lineNum > dataStartLine) && (dataStartLine !== -1)) lineReader.close();
 
         if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
@@ -94,7 +94,7 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             }
         }
 
-        // ToDo - Parse autorun + magnetic modee
+        // ToDo - Parse autorun + magnetic mode
 
         if (line.startsWith("* pressure sensor")) {
             // Parse pressure sensor information
@@ -197,8 +197,9 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
         }
         lineNum += 1;
     });
+    // }
 
-    lineReader.on('close', function() {
+    rl.on('close', function() {
         let end = moment();
         let duration = moment.duration(end.diff(start)).asSeconds();
         console.info(`\tProcessing time - parsing hex file: ${duration}s`);
@@ -210,6 +211,10 @@ export function parseHex(hexFile: string, instrument: Dictionary, coefficients: 
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        convertToEngineeringUnits(instrument, coefficients, casts, voltageOffsets, pumpDelay, df, hauls, vessel);
+        console.info(`df = ${df.length}`);
+        convertToEngineeringUnits(instrument, coefficients, casts, 
+            voltageOffsets, pumpDelay, df, outputFile, hauls, vessel);
     });
+
+    console.info(`\tparseHex ending`);
 }
