@@ -13,6 +13,7 @@ const hexFileName = "PORT_CTD5048_DO1360CT1460Op302_Hauls_1to5_21May2016.hex";
 const xmlconFileName = "SBE19plusV2_5048.xmlcon";
 
 const dataDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
+const outputDir = path.join(os.homedir(), "Desktop", "CTD output");
 
 let start: any = null, end: any = null, duration: any = null;
 

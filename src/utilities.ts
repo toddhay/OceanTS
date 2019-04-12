@@ -6,7 +6,7 @@ import * as path from 'path';
 import { readFileSync, existsSync, writeFileSync, createWriteStream } from 'fs';
 import { readFile } from "xlsx/types";
 import * as csv from 'csvtojson';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 import * as fg from 'fast-glob';
 import * as csvWriter from 'csv-write-stream';
 
@@ -161,9 +161,10 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
     let latitude = new Float32Array(df.length);
     let longitude = new Float32Array(df.length);
     let haulID = new Array(df.length);
-    let dateTime = new Array(df.length);
+    let isoDateTime = new Array(df.length), year = new Array(df.length), month = new Array(df.length), 
+        day = new Array(df.length);
     let filteredCasts: Object[] = null;
-    let timeShift: number = null;
+    let currentDateTime: moment.Moment = null;
 
     df.scan((idx) => {
         filteredCasts = casts.filter(x => {
@@ -172,14 +173,21 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
         latitude[idx] = filteredCasts[0]["latitude"];
         longitude[idx] = filteredCasts[0]["longitude"];
         haulID[idx] = filteredCasts[0]["haulID"];
-        dateTime[idx] = moment(filteredCasts[0]["startDate"]).add(idx/scanRate, "seconds")
-            .format("YYYYMMDD HH:mm:ss.SSS");      
+        currentDateTime = moment(filteredCasts[0]["startDate"]).add(idx/scanRate, "seconds").tz("America/Los_Angeles");
+        isoDateTime[idx] = currentDateTime.format();
+        year[idx] = currentDateTime.format("YYYY");
+        month[idx] = currentDateTime.format("MM");
+        day[idx] = currentDateTime.format("DD");
     }, (batch) => {} );
-    let newCols = ["Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"];
+    let newCols = ["Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"];
     df = df.assign(Table.new([Float32Vector.from(latitude), 
                               Float32Vector.from(longitude),
                               Utf8Vector.from(haulID), 
-                              Utf8Vector.from(dateTime)], newCols));
+                              Utf8Vector.from(isoDateTime),
+                              Utf8Vector.from(year),
+                              Utf8Vector.from(month),
+                              Utf8Vector.from(day)
+                             ], newCols));
     return df;
 }
 
@@ -190,8 +198,8 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
     possible formats include:  csv, xlsx, arrow
 
     */
-    let formats = ["csv", "xlsx", "arrow"];
-    if (!formats.includes(format)) {
+    let acceptableFormats = ["csv", "xlsx", "arrow"];
+    if (!acceptableFormats.includes(format)) {
         console.info(`Save format is not supported: ${format}, not saving to disk`);
         return;
     } 

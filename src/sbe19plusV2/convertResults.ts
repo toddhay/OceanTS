@@ -91,7 +91,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     let filename = path.join(os.homedir(), "Desktop", "test.csv");
     let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
         "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
-        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime"
+        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"
     ];
     await saveToFile(df, "csv", filename, outputColumns);
     end = moment();
