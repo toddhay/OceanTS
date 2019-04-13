@@ -7,12 +7,13 @@ import { hex2dec } from '../utilities';
 import { convertToEngineeringUnits } from './convertResults';
 
 
-export async function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
-                         outputFile: string, hauls?: Table, vessel?: string) {
+// export async function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
+//                          outputFile: string, hauls?: Table, vessel?: string): Promise<Table>  {
+export async function parseHex(hexFile: string): Promise<Object> {
     /*
     hexFile: string - full path to a Seabird 19plusV2 hex file
     */
-    let dataStartLine: number = -1, lineNum: number = -1;
+    let dataStartLine: number = -1, lineNum: number = 0;
     let serialNumber: any = null;
     let endDateTime: any = null;
     let samples: number = null;
@@ -55,20 +56,19 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
         {"sensor": "Clock", "variable": "Time, Seconds since January 1, 2000", "size": 8, "data": null, "operations": null}
     ]
     let currentChar: number = 0, dataRow: number = 0, value: any = null, schema = [];
-    let df = null;
-
-    let start = moment();
+    let df: Table = null;
 
     // let output = new stream.PassThrough({ objectMode: true });
     // let output: any = null;
 
-    const line_counter = ((i = 0) => () => ++i)();
+    // const line_counter = ((i = 0) => () => ++i)();
     const rl = createInterface({ input: createReadStream(hexFile) });
 
-    rl.on('line', (line: string, lineNum: number = line_counter()) => {
+    // rl.on('line', (line: string, lineNum: number = line_counter()) => {
     // for await (const line of rl[Symbol.asyncIterator]()) {
+    for await (const line of rl) {
    
-        // console.info(`line = ${line}`);
+        // console.info(`line ${lineNum} = ${line}`);
         // if ((lineNum > dataStartLine) && (dataStartLine !== -1)) lineReader.close();
 
         if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
@@ -201,25 +201,42 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
             dataRow += 1;
         }
         lineNum += 1;
-    });
-    // }
+    // });
+    }
 
-    rl.on('close', function() {
-        let end = moment();
-        let duration = moment.duration(end.diff(start)).asSeconds();
-        console.info(`\tProcessing time - parsing hex file: ${duration}s`);
+    let dataArrays = [];
+    let tempArray: any = null;
+    schema.forEach(x => {
+        tempArray = parsingRules.find(y => y.variable === x);
+        dataArrays.push(FloatVector.from(tempArray.data));
+    })
+    df = Table.new(dataArrays, schema);
 
-        let dataArrays = [];
-        let tempArray: any = null;
-        schema.forEach(x => {
-            tempArray = parsingRules.find(y => y.variable === x);
-            dataArrays.push(FloatVector.from(tempArray.data));
-        })
-        df = Table.new(dataArrays, schema);
-        console.info(`\t\tdf = ${df.length}`);
-        convertToEngineeringUnits(instrument, coefficients, casts, 
-            voltageOffsets, pumpDelay, df, outputFile, hauls, vessel);
-    });
+    let results = {
+        "df": df, "casts": casts, "voltageOffsets": voltageOffsets, "pumpDelay": pumpDelay
+    }
+    return results;
 
-    console.info(`\tparseHex ending`);
+
+
+
+
+    // rl.on('close', function() {
+    //     let end = moment();
+    //     let duration = moment.duration(end.diff(start)).asSeconds();
+    //     console.info(`\tProcessing time - parsing hex file: ${duration}s`);
+
+    //     let dataArrays = [];
+    //     let tempArray: any = null;
+    //     schema.forEach(x => {
+    //         tempArray = parsingRules.find(y => y.variable === x);
+    //         dataArrays.push(FloatVector.from(tempArray.data));
+    //     })
+    //     df = Table.new(dataArrays, schema);
+    //     return df;
+
+    //     console.info(`\t\tdf = ${df.length}`);
+    //     convertToEngineeringUnits(instrument, coefficients, casts, 
+    //         voltageOffsets, pumpDelay, df, outputFile, hauls, vessel);
+    // });
 }

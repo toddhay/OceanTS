@@ -10,7 +10,7 @@ if (!existsSync(logDir)) {
 export const errorLog = path.resolve(path.join(logDir, 'error.log'));
 export const appLog = path.resolve(path.join(logDir, 'app.log'));
 
-let logjson = {
+let logConfig = {
     "appenders": {
         "app": {
             "type": "dateFile",
@@ -33,10 +33,7 @@ let logjson = {
         "default": { "appenders": [ "app", "console", "app2" ], "level": "debug" }
     }
 };
-
-console.info(`${logjson}`);
-
-configure(logjson);
+configure(logConfig);
 export const logger = getLogger();
 logger.level = "debug";
 

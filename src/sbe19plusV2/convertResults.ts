@@ -15,15 +15,14 @@ import { logger } from '../logger';
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
                                                  voltageOffsets: Object, pumpDelay: number, df: Table,
-                                                 outputFile: string, hauls?: Table, vessel?: string) {
+                                                 outputFile: string, hauls?: Table, vessel?: string):
+                                                 Promise<Table> {
     /*
     Function to convert the raw, decimal data parsed from the hex file over to engineering units.
     The data has already been converted to decimal units from hexadecimal units in the df input.  This
     function relies heavily upon the equations found in the equations folder for the instrument-specific 
     conversion equations
     */
-    console.info(`\tConverting to Engineering Units`);
-    let start = moment();
 
     // Scan Rate - use for the temporal + spatial data integration
     let scanRate = 4;
@@ -54,76 +53,25 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     // Oxygen Optode, Aanderaa
     df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
 
-    let end = moment();
-    let duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\t\tProcessing time - converting to engineering units: ${duration}s`);
-
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
-    console.info(`\tMatching haul latitude/longitude data to cast`);
-    start = moment();
+    console.info(`\t\tMatching haul latitude/longitude data to casts in hex file`);
     casts = await mergeLatitudeIntoCasts(hauls, casts, vessel, scanRate);
-    end = moment();
-    duration = moment.duration(end.diff(start)).asSeconds();
     casts.forEach(x => {
-        console.info(`\t\tmatched cast: ${JSON.stringify(x)}`);
+        console.info(`\t\t\tmatched cast: ${JSON.stringify(x)}`);
     })
-    console.info(`\t\tProcessing time - matching haul lat/lons to casts: ${duration}s`);
 
     // Depth - Requires Latitude data first
-    console.info(`\tCalculating Depth (m)`);
-    start = moment();
     df = await depth(df, casts);
-    end = moment();
-    duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\t\tProcessing time - calculating depth (m): ${duration}s`);
 
     // Add haul ID, latitude, longitude, date/time into the arrow table
-    console.info(`\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
-    start = moment();
+    console.info(`\t\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
     try {
         df = await addHaulInfoToTable(df, casts);
     } catch (e) {
         // console.info(`Error: ${e}, outputFile: ${outputFile}`);
-        logger.error(`Error: ${e}, outputFile: ${outputFile}`);
-    }
-    end = moment();
-    duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\t\tProcessing time - adding haul info to table: ${duration}s`);
-
-    // Save the results to a csv file
-    console.info(`\tSaving data to a csv file`);
-    start = moment();
-    let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
-        "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
-        "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"
-    ];
-    await saveToFile(df, "csv", outputFile, outputColumns);
-    end = moment();
-    duration = moment.duration(end.diff(start)).asSeconds();
-    console.info(`\t\tProcessing time - saving result to a file: ${duration}s`);
-
-    // Display the results
-    let results = [];
-
-    let sliceSize: number = 5, 
-        sliceStart: number = 0, //df.length - sliceSize, 
-        sliceEnd: number = sliceStart + sliceSize;
-
-    // console.info("Calibration Coefficients");
-    // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
-    // console.info(`Results - Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
-    try {
-
-        outputColumns.forEach(x => {
-            results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
-            // console.info(`\t${x}: ${results}`);
-        });
-        // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
-        // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
-        // console.info(`Casts: ${JSON.stringify(casts)}`);
-
-    } catch (e) {
-        logger.error(`Error: ${e}`);
+        logger.error(`\t\tError addHaulInfoToTable: ${e}, df.isValid=${df.isValid}, outputFile: ${outputFile}`);
     }
 
+    // Return the arrow table
+    return df;
 }
