@@ -32,7 +32,7 @@ async function parse2(file: string) {
 async function process2() {
 
     files.forEach(async (x: any, idx: number) => {
-        if (idx === 1) process.exit(0);
+        // if (idx === 1) process.exit(0);
         await parse2(x)
     });
 }

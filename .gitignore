@@ -11,6 +11,7 @@
 lerna-debug.log*
 # dependencies
 **/node_modules
+**/logs
 
 # IDEs and editors
 /.idea

@@ -5,7 +5,20 @@ import {Table, Null} from 'apache-arrow';
 import * as parser from 'fast-xml-parser';
 import { parseHex } from './src/sbe19plusV2/parseHex';
 import { getTrawlSurveyHaulData, getHexFiles, getXmlconFiles } from './src/utilities';
-import moment = require('moment');
+import { logger } from './src/logger';
+import * as moment from 'moment';
+
+// Set up log4js logger
+// import logjson from './src/log.json';
+// import { configure, getLogger } from 'log4js';
+// export const logger = getLogger();
+// configure(logjson);
+// logger.level = "debug";
+logger.info('Start data processing....');
+
+// logger.fatal('big error');
+// process.exit(0);
+// setInterval(function(){ process.exit(0); }, 100);
 
 // Sample Data
 const dir = "./data/sbe19plusV2/";
@@ -62,8 +75,8 @@ async function bulkProcess() {
     strippedArray = hexFilesArray.map(x => {
         return x.replace(dataDir.replace(/\\/g, '\/') + "/", "");
     });
-    strippedArray.forEach(async (x: any, idx: number) => {
-        if (idx === 5) process.exit(0);
+    await strippedArray.forEach(async (x: any, idx: number) => {
+        // if (idx === 5) process.exit(0);
 
         lineArray = x.split("/");
         currentYear = lineArray[0];
@@ -95,12 +108,6 @@ async function bulkProcess() {
 
         // Parse hex file and convert to raw, decimal values in arrow data structure
         if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
-
-            // Parse the SBE 19plusV2 hex file
-            // let dir = "./data/sbe19plusV2/";
-            // let hexFileName = "PORT_CTD5048_DO1360CT1460Op302_Hauls_1to5_21May2016.hex";
-            // let currentHex = path.resolve(path.join(dir, hexFileName));
-
             await parseHex(currentHex, instrument, sensors, outputFile, hauls, currentVessel);
             console.info(`\tafter await`);
         }
@@ -108,7 +115,6 @@ async function bulkProcess() {
         duration = moment.duration(end.diff(start)).asSeconds();
         console.info(`\tProcessing time - overall file processing: ${duration}s`);
     
-
     })
 
     // ToDo - Auto QA/QC the new arrow data structure

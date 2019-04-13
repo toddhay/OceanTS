@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import * as os from 'os';
 import * as path from 'path';
 import { mergeLatitudeIntoCasts, addHaulInfoToTable, saveToFile } from '../utilities';
-
+import { logger } from '../logger';
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
                                                  voltageOffsets: Object, pumpDelay: number, df: Table,
@@ -65,7 +65,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     casts.forEach(x => {
-        console.info(`\t${JSON.stringify(x)}`);
+        console.info(`\t\tmatched cast: ${JSON.stringify(x)}`);
     })
     console.info(`\t\tProcessing time - matching haul lat/lons to casts: ${duration}s`);
 
@@ -80,7 +80,12 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     // Add haul ID, latitude, longitude, date/time into the arrow table
     console.info(`\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
     start = moment();
-    df = await addHaulInfoToTable(df, casts);
+    try {
+        df = await addHaulInfoToTable(df, casts);
+    } catch (e) {
+        // console.info(`Error: ${e}, outputFile: ${outputFile}`);
+        logger.error(`Error: ${e}, outputFile: ${outputFile}`);
+    }
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     console.info(`\t\tProcessing time - adding haul info to table: ${duration}s`);
@@ -107,11 +112,18 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     // console.info("Calibration Coefficients");
     // coefficients.forEach(x => { console.info(`\tcoeff: ${JSON.stringify(x)}`); });
     // console.info(`Results - Elements ${sliceStart} to ${sliceEnd-1} of the columns:`)
-    outputColumns.forEach(x => {
-        results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
-        // console.info(`\t${x}: ${results}`);
-    });
-    // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
-    // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
-    // console.info(`Casts: ${JSON.stringify(casts)}`);
+    try {
+
+        outputColumns.forEach(x => {
+            results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
+            // console.info(`\t${x}: ${results}`);
+        });
+        // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
+        // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
+        // console.info(`Casts: ${JSON.stringify(casts)}`);
+
+    } catch (e) {
+        logger.error(`Error: ${e}`);
+    }
+
 }

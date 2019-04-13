@@ -66,9 +66,9 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
     const rl = createInterface({ input: createReadStream(hexFile) });
 
     rl.on('line', (line: string, lineNum: number = line_counter()) => {
-    for await (const line of rl) {   // rl[Symbol.asyncIterator]()) {
+    // for await (const line of rl[Symbol.asyncIterator]()) {
    
-        console.info(`line = ${line}`);
+        // console.info(`line = ${line}`);
         // if ((lineNum > dataStartLine) && (dataStartLine !== -1)) lineReader.close();
 
         if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
@@ -77,7 +77,7 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
             if (lineParts.length === 2) {
                 serialNumber = lineParts[1].split(' ')[0];
                 endDateTime = lineParts[1].replace(serialNumber, "").trim()
-                console.info('\tendDateTime: ' + endDateTime);
+                // console.info('\tendDateTime: ' + endDateTime);
             }
         }
 
@@ -178,19 +178,24 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
                     ((rule.sensor in extraSensors) && !(extraSensors[rule.sensor]))) {
                     return;
                 }
-                value = hex2dec(line.slice(currentChar, currentChar+rule.size));
-                if ((rule.operations !== null) && !(isNaN(value))) {
-                    rule.operations.forEach((operation: any) => {
-                        value = operation.op(value, operation.value);   // Perform the rule math operation on the value
-                    });
-                }
-                if ((value !== null) && !(isNaN(value))) {
-                    if (lineNum === dataStartLine) {
-                        schema.push(rule.variable)
-                        rule.data = new Float32Array(samples);
+                try {
+
+                    value = hex2dec(line.slice(currentChar, currentChar+rule.size));
+                    if ((rule.operations !== null) && !(isNaN(value))) {
+                        rule.operations.forEach((operation: any) => {
+                            value = operation.op(value, operation.value);   // Perform the rule math operation on the value
+                        });
                     }
-                    rule.data[dataRow] = value;
-                    currentChar += rule.size;
+                    if ((value !== null) && !(isNaN(value))) {
+                        if (lineNum === dataStartLine) {
+                            schema.push(rule.variable)
+                            rule.data = new Float32Array(samples);
+                        }
+                        rule.data[dataRow] = value;
+                        currentChar += rule.size;
+                    }
+                } catch (e) {
+                    console.error(`error, file=${hexFile}: ${e}`);
                 }
             });
             dataRow += 1;
@@ -211,7 +216,7 @@ export async function parseHex(hexFile: string, instrument: Dictionary, coeffici
             dataArrays.push(FloatVector.from(tempArray.data));
         })
         df = Table.new(dataArrays, schema);
-        console.info(`df = ${df.length}`);
+        console.info(`\t\tdf = ${df.length}`);
         convertToEngineeringUnits(instrument, coefficients, casts, 
             voltageOffsets, pumpDelay, df, outputFile, hauls, vessel);
     });

@@ -159,7 +159,7 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
     /* Function to add haul ID, latitude, longitude, date/time columns to the table
         df - arrow table
         casts - array of cast objects that contain the haul information
-    */
+    */    
     let latitude = new Float32Array(df.length);
     let longitude = new Float32Array(df.length);
     let haulID = new Array(df.length);

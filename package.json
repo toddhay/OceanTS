@@ -28,11 +28,13 @@
     "eslint": "^5.16.0",
     "fast-glob": "^2.2.6",
     "fast-xml-parser": "^3.12.16",
+    "log4js": "^4.1.0",
     "mathjs": "^5.8.0",
     "moment": "^2.24.0",
     "moment-timezone": "^0.5.23",
     "ts-node": "^8.0.3",
     "typescript": "^3.3.4000",
+    "winston": "^3.2.1",
     "xlsx": "^0.14.1"
   }
 }
