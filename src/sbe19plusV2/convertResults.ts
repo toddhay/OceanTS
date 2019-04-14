@@ -59,6 +59,15 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     casts = await mergeLatitudeIntoCasts(hauls, casts, vessel, scanRate);
     casts.forEach(x => {
         logger.info(`\t\t\tmatched cast: ${JSON.stringify(x)}`);
+        if (!("latitude" in x)) {
+            let outputArray = outputFile.split("\\");
+            msg = `Year: ${moment(x["startDate"]).format("YYYY")}, ` +
+                `Vessel: ${vessel}, Input File: ${outputArray[outputArray.length-1].replace(".csv", ".hex")}, ` +
+                `Cast: ${x["cast"]} - could not fine matching haul`;
+            logger.error(msg);
+            errorLogger.error(msg);
+            errorLogger.error(`\tcast: ${JSON.stringify(x)}`);
+        }
     })
 
     // Depth - Requires Latitude data first

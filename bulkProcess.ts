@@ -75,7 +75,7 @@ async function bulkProcess() {
     });
 
     // TESTING ONLY
-    // strippedArray = strippedArray.slice(0,10);
+    strippedArray = strippedArray.slice(0,5);
 
     let idx: number = 0
     // Must use for ... of syntax for proper ordering, per:  
