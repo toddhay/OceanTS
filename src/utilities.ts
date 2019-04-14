@@ -186,17 +186,17 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
         filteredCasts = casts.filter(x => {
             return idx >= x['startNum'] - 1 && idx < x['endNum'];
         })
-        if ((filteredCasts.length > 0) && ("latitude" in filteredCasts[0])) {
+        if ("latitude" in filteredCasts[0]) {
             latitude[idx] = filteredCasts[0]["latitude"];
             longitude[idx] = filteredCasts[0]["longitude"];
             haulID[idx] = filteredCasts[0]["haulID"];
-            currentDateTime = moment(filteredCasts[0]["startDate"])
-                    .add(idx/scanRate, "seconds").tz("America/Los_Angeles");
-            isoDateTime[idx] = currentDateTime.format();
-            year[idx] = currentDateTime.format("YYYY");
-            month[idx] = currentDateTime.format("MM");
-            day[idx] = currentDateTime.format("DD");
         }
+        currentDateTime = moment(filteredCasts[0]["startDate"])
+            .add(idx/scanRate, "seconds").tz("America/Los_Angeles");
+        isoDateTime[idx] = currentDateTime.format();
+        year[idx] = currentDateTime.format("YYYY");
+        month[idx] = currentDateTime.format("MM");
+        day[idx] = currentDateTime.format("DD");
     }, (batch) => {} );
     let newCols = ["Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"];
     df = df.assign(Table.new([Float32Vector.from(latitude), 

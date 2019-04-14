@@ -30,7 +30,7 @@ let start: moment.Moment = null, end: moment.Moment = null, duration: number = n
 let df: Table = null, results: Object = null;
 let currentHex: string = null, currentXmlcon: string = null, 
     currentYear: string = null, currentVessel: string = null,
-    currentPosition: string = null, currentCtd: string = null;
+    currentPosition: string = null, currentCTD: string = null;
 let strippedArray: string[] = null, lineArray: string[] = null, 
     hexFileArray: string[] = null;
 let metrics: number[] = [];
@@ -75,41 +75,62 @@ async function bulkProcess() {
     });
 
     // TESTING ONLY
-    strippedArray = strippedArray.slice(0,5);
+    // strippedArray = strippedArray.slice(155);
 
-    let idx: number = 0
+    let idx: number = 0, outputFile: string = null;
     // Must use for ... of syntax for proper ordering, per:  
     //     https://lavrton.com/javascript-loops-how-to-handle-async-await-6252dd3c795/
     for (const x of strippedArray) {
 
-        // if (idx !== 4) {
+        // if (idx < 295) {
         //     idx += 1;
         //     continue;
         // }
+        // if (idx === 300) break;
+
         hex_file_start = moment();
 
         lineArray = x.split("/");
+        hexFileArray = lineArray.slice(-1)[0].split("_");
+
         currentYear = lineArray[0];
         currentVessel = lineArray[1]; 
-        hexFileArray = lineArray.slice(-1)[0].split("_");
         currentPosition = hexFileArray[0];
-        currentCtd = hexFileArray[1].replace("CTD", "");
+        currentCTD = hexFileArray[1].replace("CTD", "");
 
+        // Only process 2017 data - Process everyting but the 2017 CTD7738 system
+        if (  (currentYear === "2016") ||  
+            ((currentYear === "2017") && (currentCTD === "7738"))
+            ) {
+            idx += 1;
+            continue;
+        }
+
+        // Create the output directory if it does not exist + outputFile string
         if (!existsSync(path.join(outputDir, currentYear)))
             mkdirSync(path.join(outputDir, currentYear));
         if (!existsSync(path.join(outputDir, currentYear, currentVessel)))
             mkdirSync(path.join(outputDir, currentYear, currentVessel));
         currentOutputDir = path.join(outputDir, currentYear, currentVessel);
+        outputFile = path.join(currentOutputDir, lineArray.slice(-1)[0].slice(0, -3) + "csv");
 
         console.info("\n");
         logger.info(`**************************************************`);
         logger.info(`*** Processing item ${idx}: ${currentYear}, ${currentVessel}, ` +
-            `${currentPosition}, ${currentCtd} ***`);
+            `${currentPosition}, ${currentCTD} ***`);
         logger.info(`**************************************************`);
 
-        currentHex = path.resolve(hexFilesArray[idx]);
+        currentHex = path.resolve(path.join(dataDir, strippedArray[idx]));
         currentXmlcon = path.resolve(path.join(dataDir, currentYear, 
-            currentYear + "_CTD_ConFiles_Raw", "SBE19plusV2_" + currentCtd + ".xmlcon"))
+            currentYear + "_CTD_ConFiles_Raw", "SBE19plusV2_" + currentCTD + ".xmlcon"))
+            
+        logger.info(`\txmlcon: ${currentXmlcon}`);
+        logger.info(`\tinputHex = ${currentHex}`);
+        logger.info(`\toutputCSV = ${outputFile}`);
+
+        // TESTING ONLY
+        // idx += 1;
+        // continue;
 
         // Read an individiaul xmlcon file
         let xmlconFileInMemory = readFileSync(currentXmlcon, "utf8");
@@ -119,14 +140,8 @@ async function bulkProcess() {
         let instrument = xmlconJson.SBE_InstrumentConfiguration.Instrument;
         let sensors = instrument.SensorArray.Sensor;
 
-        let outputFile = path.join(currentOutputDir, lineArray.slice(-1)[0].slice(0, -3) + "csv");
-
         // Parse hex file and convert to raw, decimal values in arrow data structure
         if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
-
-            logger.info(`\txmlcon: ${currentXmlcon}`);
-            logger.info(`\tinputHex = ${currentHex}`);
-            logger.info(`\toutputCSV = ${outputFile}`);
     
             // results = await parseHex(currentHex, instrument, sensors, outputFile, hauls, currentVessel);
             logger.info(`\tParsing Hex File`);
