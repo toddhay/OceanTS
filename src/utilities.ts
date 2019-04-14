@@ -133,6 +133,15 @@ export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {
 export async function mergeLatitudeIntoCasts(hauls: Table, casts: Object[], 
                                              vessel: string,
                                              scanRate: number): Promise<Array<Object>> {
+    
+    // VesselMap is required for translating from vessel folder path to named pulled from the data warehouse
+    let vesselMap = {
+        "Excalibur": "Excalibur",
+        "LastStraw": "Last Straw",
+        "MsJulie": "Ms. Julie",
+        "NoahsArk": "Noahs Ark"
+    };
+    
     if (hauls !== null) {
         let castStart: Date = null, castEnd: Date = null;
         let haulID: any = null, lat: any = null, lon: any = null;
@@ -145,7 +154,7 @@ export async function mergeLatitudeIntoCasts(hauls: Table, casts: Object[],
                 return haulStart < x["endDate"] && haulEnd > x["startDate"];
             }, b => 1);
 
-            hauls.filter(haulsDateFilter.and(col("vessel").eq(vessel)))
+            hauls.filter(haulsDateFilter.and(col("vessel").eq(vesselMap[vessel])))
                 .scan((idx) => {
                     x["latitude"] = lat(idx);
                     x["longitude"] = lon(idx);
