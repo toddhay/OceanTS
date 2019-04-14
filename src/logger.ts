@@ -27,14 +27,22 @@ let logConfig = {
             "backups": 100
 
         },
+        "error": {
+            "type": "fileSync",
+            "filename": errorLog,
+            "maxLogSize": 1048576,
+            "backups": 100
+        },
         "console": { "type": "console" }
     },
     "categories": { 
-        "default": { "appenders": [ "app", "console", "app2" ], "level": "debug" }
+        "default": { "appenders": [ "app", "console", "app2" ], "level": "debug" },
+        "error": { "appenders": [ "error" ], "level": "error" }
     }
 };
 configure(logConfig);
-export const logger = getLogger();
+export const logger = getLogger("default");
+export const errorLogger = getLogger("error");
 logger.level = "debug";
 
 

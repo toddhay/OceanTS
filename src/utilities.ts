@@ -1,14 +1,19 @@
-import { Table, DateVector, Float32Vector, Utf8Vector } from "apache-arrow";
+import { Table, DateVector, Float32Vector, Utf8Vector, 
+    RecordBatchJSONWriter, RecordBatch } from "apache-arrow";
 import { col, custom } from 'apache-arrow/compute/predicate';
+import * as arrow2csv from 'apache-arrow/bin/arrow2csv';
 import Axios from 'axios';
 import * as os from 'os';
 import * as path from 'path';
 import { readFileSync, existsSync, writeFileSync, createWriteStream } from 'fs';
 import { readFile } from "xlsx/types";
-import * as csv from 'csvtojson';
 import * as moment from 'moment-timezone';
 import * as fg from 'fast-glob';
+
+import * as csv from 'csvtojson';
 import * as csvWriter from 'csv-write-stream';
+import * as json2csv from 'json2csv';
+import { logger } from './logger';
 
 export function hex2dec(x: string): number {
     return parseInt(x, 16);
@@ -82,7 +87,7 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
                 writeFileSync(haulsFile, data);
                 data = await csv().fromString(data);    // Convert csv to an array of JSON objects
             }
-            console.info(`\tdata retrieved successfully`);
+            logger.info(`\tdata retrieved successfully`);
         } else {
             if (selectionType === "csv") {
                 data = await csv().fromFile(haulsFile);   // Convert csv to an array of JSON objects
@@ -90,14 +95,14 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
                 data = readFileSync(haulsFile);
             }
         }
-        console.info(`\thaul data successfully opened ...`);
+        logger.info(`\thaul data successfully opened ...`);
 
         let df = jsonArray2ArrowTable(data);
-        console.info(`\thaul data successfully converted to an arrow table`);
+        logger.info(`\thaul data successfully converted to an arrow table`);
 
         return df;
     } catch (e) {
-        console.error(`\tError in retrieving trawl survey haul data: ${e}`);
+        logger.error(`\tError in retrieving trawl survey haul data: ${e}`);
     }
     return null;
 }
@@ -132,12 +137,12 @@ export async function mergeLatitudeIntoCasts(hauls: Table, casts: Object[],
         let castStart: Date = null, castEnd: Date = null;
         let haulID: any = null, lat: any = null, lon: any = null;
         casts.forEach(x => {
-            castStart = x["startDate"];
-            castEnd = moment(castStart).add((x["endNum"] - x["startNum"]) / scanRate, 'seconds').toDate();
+            x["startDate"] = moment(x["startDate"]).tz("America/Los_Angeles").format();
+            x["endDate"]  = moment(x["startDate"]).add((x["endNum"] - x["startNum"]) / scanRate, 'seconds').tz("America/Los_Angeles").format();
             const haulsDateFilter = custom(i => {
-                let haulStart = hauls.getColumn("tow_start_timestamp").get(i);
-                let haulEnd = hauls.getColumn("tow_end_timestamp").get(i);
-                return haulStart < castEnd && haulEnd > castStart;
+                let haulStart = moment(hauls.getColumn("tow_start_timestamp").get(i)).tz("America/Los_Angeles").format();
+                let haulEnd = moment(hauls.getColumn("tow_end_timestamp").get(i)).tz("America/Los_Angeles").format();
+                return haulStart < x["endDate"] && haulEnd > x["startDate"];
             }, b => 1);
 
             hauls.filter(haulsDateFilter.and(col("vessel").eq(vessel)))
@@ -214,18 +219,35 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
     df = Table.new(dfCols, outputColumns);
     let header = df.schema.fields.map(x => x.name);
 
+    // TESTING
+    // format = "arrow";
+    // filename = filename.slice(0, -3) + "arrow";
+
+    let writeStream = createWriteStream(filename);
     if (format === "csv") {
-        let writeStream = createWriteStream(filename);
+
+        // await RecordBatchJSONWriter.writeAll(df).pipe(writeStream);
+        // let parser = json2csv.parse(RecordBatchJSONWriter.writeAll(df));
+
         let writer = csvWriter({"headers": header});
         writer.pipe(writeStream);
         for (let i=0; i<df.length; i++) {
-            writer.write(df.get(i).toJSON());
+            await writer.write(df.get(i).toJSON());
         }
-        writer.end();    
+        writer.end();
 
     } else if (format === "xlsx") {
 
     } else if (format === "arrow") {
+
+        await RecordBatchFileWriter.writeAll(df).toUint8Array().then(x => {
+            x.pipe(writeStream)
+        }).pipe(writeStream);
+
+        const arrow = readFileSync(filename);
+        const table = Table.from([arrow]);
+        let row = table.get(0);
+        console.log(`row = ${row}`);
 
     }
 }

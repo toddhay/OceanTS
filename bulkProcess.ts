@@ -24,14 +24,16 @@ if (!existsSync(outputDir)) {
     mkdirSync(outputDir);
 }
 
+let currentOutputDir: string = null;
 let start: moment.Moment = null, end: moment.Moment = null, duration: number = null,
     hex_file_start: moment.Moment = null;
-let df: Table = null, results: Object = null, idx: number = 0;
+let df: Table = null, results: Object = null;
 let currentHex: string = null, currentXmlcon: string = null, 
     currentYear: string = null, currentVessel: string = null,
     currentPosition: string = null, currentCtd: string = null;
 let strippedArray: string[] = null, lineArray: string[] = null, 
     hexFileArray: string[] = null;
+let metrics: number[] = [];
 
 async function bulkProcess() {
 
@@ -73,12 +75,17 @@ async function bulkProcess() {
     });
 
     // TESTING ONLY
-    strippedArray = strippedArray.slice(0,2);
+    // strippedArray = strippedArray.slice(0,10);
 
+    let idx: number = 0
     // Must use for ... of syntax for proper ordering, per:  
     //     https://lavrton.com/javascript-loops-how-to-handle-async-await-6252dd3c795/
     for (const x of strippedArray) {
 
+        // if (idx !== 4) {
+        //     idx += 1;
+        //     continue;
+        // }
         hex_file_start = moment();
 
         lineArray = x.split("/");
@@ -88,9 +95,17 @@ async function bulkProcess() {
         currentPosition = hexFileArray[0];
         currentCtd = hexFileArray[1].replace("CTD", "");
 
+        if (!existsSync(path.join(outputDir, currentYear)))
+            mkdirSync(path.join(outputDir, currentYear));
+        if (!existsSync(path.join(outputDir, currentYear, currentVessel)))
+            mkdirSync(path.join(outputDir, currentYear, currentVessel));
+        currentOutputDir = path.join(outputDir, currentYear, currentVessel);
+
         console.info("\n");
+        logger.info(`**************************************************`);
         logger.info(`*** Processing item ${idx}: ${currentYear}, ${currentVessel}, ` +
             `${currentPosition}, ${currentCtd} ***`);
+        logger.info(`**************************************************`);
 
         currentHex = path.resolve(hexFilesArray[idx]);
         currentXmlcon = path.resolve(path.join(dataDir, currentYear, 
@@ -104,8 +119,7 @@ async function bulkProcess() {
         let instrument = xmlconJson.SBE_InstrumentConfiguration.Instrument;
         let sensors = instrument.SensorArray.Sensor;
 
-        let outputFile = path.join(outputDir, lineArray.slice(-1)[0].slice(0, -3) + "csv");
-
+        let outputFile = path.join(currentOutputDir, lineArray.slice(-1)[0].slice(0, -3) + "csv");
 
         // Parse hex file and convert to raw, decimal values in arrow data structure
         if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
@@ -162,10 +176,14 @@ async function bulkProcess() {
         end = moment();
         duration = moment.duration(end.diff(hex_file_start)).asSeconds();
         logger.info(`\tProcessing time - item ${idx} - overall file processing: ${duration}s`);
-        
+        metrics.push(duration);
+
         idx += 1;
     }
-    // })
+    let totalTime = metrics.reduce((x, y) => x + y, 0);
+    logger.info('Total Processing time');
+    logger.info(`\t${idx} items, total time: ${totalTime.toFixed(1)}s, ` +
+        `time per item = ${(totalTime/idx).toFixed(1)}s`);
 
     // ToDo - Auto QA/QC the new arrow data structure
 

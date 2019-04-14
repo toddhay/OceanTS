@@ -11,7 +11,7 @@ import * as moment from 'moment';
 import * as os from 'os';
 import * as path from 'path';
 import { mergeLatitudeIntoCasts, addHaulInfoToTable, saveToFile } from '../utilities';
-import { logger } from '../logger';
+import { logger, errorLogger } from '../logger';
 
 export async function convertToEngineeringUnits (instrument: Object, coefficients: Object[], casts: Object[], 
                                                  voltageOffsets: Object, pumpDelay: number, df: Table,
@@ -23,6 +23,7 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     function relies heavily upon the equations found in the equations folder for the instrument-specific 
     conversion equations
     */
+    let msg: string = null;
 
     // Scan Rate - use for the temporal + spatial data integration
     let scanRate = 4;
@@ -54,22 +55,25 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     df = await oxygen_optode(df, "OPTODE Oxygen", coefficients[6]["OptodeOxygenAanderaa"]);
 
     // Add Haul, Date/Time, Latitude, Longitude data to the arrow Table from the data warehouse
-    console.info(`\t\tMatching haul latitude/longitude data to casts in hex file`);
+    logger.info(`\t\tMatching haul latitude/longitude data to casts in hex file`);
     casts = await mergeLatitudeIntoCasts(hauls, casts, vessel, scanRate);
     casts.forEach(x => {
-        console.info(`\t\t\tmatched cast: ${JSON.stringify(x)}`);
+        logger.info(`\t\t\tmatched cast: ${JSON.stringify(x)}`);
     })
 
     // Depth - Requires Latitude data first
     df = await depth(df, casts);
 
     // Add haul ID, latitude, longitude, date/time into the arrow table
-    console.info(`\t\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
+    logger.info(`\t\tAdd haul ID, latitude, longitude, and date/times into the arrow table`);
     try {
         df = await addHaulInfoToTable(df, casts);
     } catch (e) {
-        // console.info(`Error: ${e}, outputFile: ${outputFile}`);
-        logger.error(`\t\tError addHaulInfoToTable: ${e}, df.isValid=${df.isValid}, outputFile: ${outputFile}`);
+        let outputArray = outputFile.split("\\");
+        msg = `Year: ${moment(casts[0]["startDate"]).format("YYYY")}, ` +
+            `Vessel: ${vessel}, Input File: ${outputArray[outputArray.length-1].replace(".csv", ".hex")}, Error addHaulInfoToTable: ${e}`;
+        logger.error(msg);
+        errorLogger.error(msg);
     }
 
     // Return the arrow table
