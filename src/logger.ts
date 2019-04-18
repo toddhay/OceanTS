@@ -15,11 +15,11 @@ let logConfig = {
         "app": {
             "type": "dateFile",
             "filename": appLog,
-            "pattern": "-yyyy-MM-dd-HH-mm-ss",
+            "pattern": "-yyyy-MM-dd-hh-mm",
             "alwaysIncludePattern": true,
             "keepFileExt": true, 
             "daysToKeep": 15,
-            "flags": "as"
+            "flags": 'as'
         },
         "app2": {
             "type": "fileSync",
