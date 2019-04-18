@@ -15,10 +15,11 @@ let logConfig = {
         "app": {
             "type": "dateFile",
             "filename": appLog,
-            "pattern": "-yyyy-MM-dd",
+            "pattern": "-yyyy-MM-dd-HH-mm-ss",
             "alwaysIncludePattern": true,
             "keepFileExt": true, 
-            "daysToKeep": 15
+            "daysToKeep": 15,
+            "flags": "as"
         },
         "app2": {
             "type": "fileSync",
@@ -36,7 +37,7 @@ let logConfig = {
         "console": { "type": "console" }
     },
     "categories": { 
-        "default": { "appenders": [ "app", "console", "app2" ], "level": "debug" },
+        "default": { "appenders": [ "app", "console" ], "level": "debug" },
         "error": { "appenders": [ "error" ], "level": "error" }
     }
 };

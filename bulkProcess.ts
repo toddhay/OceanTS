@@ -75,7 +75,7 @@ async function bulkProcess() {
     });
 
     // TESTING ONLY
-    // strippedArray = strippedArray.slice(155);
+    strippedArray = strippedArray.slice(3);
 
     let idx: number = 0, outputFile: string = null;
     // Must use for ... of syntax for proper ordering, per:  
@@ -99,12 +99,12 @@ async function bulkProcess() {
         currentCTD = hexFileArray[1].replace("CTD", "");
 
         // Only process 2017 data - Process everyting but the 2017 CTD7738 system
-        if (  (currentYear === "2016") ||  
-            ((currentYear === "2017") && (currentCTD === "7738"))
-            ) {
-            idx += 1;
-            continue;
-        }
+        // if (  (currentYear === "2016") ||  
+        //     ((currentYear === "2017") && (currentCTD === "7738"))
+        //     ) {
+        //     idx += 1;
+        //     continue;
+        // }
 
         // Create the output directory if it does not exist + outputFile string
         if (!existsSync(path.join(outputDir, currentYear)))
