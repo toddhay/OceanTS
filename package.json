@@ -11,11 +11,15 @@
     "prebuild": "yarn del-dist",
     "build": "lerna run build"
   },
+  "engines": {
+    "node": ">=11.14.0"
+  },
   "devDependencies": {
     "@types/mathjs": "^5.0.1",
     "babel-cli": "^6.26.0",
     "del-cli": "^1.1.0",
-    "lerna": "^3.13.1"
+    "lerna": "^3.13.4",
+    "tar": ">=4.4.2"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^1.6.0",
