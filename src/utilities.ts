@@ -1,5 +1,5 @@
 import { Table, DateVector, Float32Vector, Utf8Vector, 
-    RecordBatchJSONWriter, RecordBatch } from "apache-arrow";
+    RecordBatchJSONWriter, RecordBatch, Int32Vector } from "apache-arrow";
 import { col, custom } from 'apache-arrow/compute/predicate';
 import * as arrow2csv from 'apache-arrow/bin/arrow2csv';
 import Axios from 'axios';
@@ -14,6 +14,7 @@ import * as csv from 'csvtojson';
 import * as csvWriter from 'csv-write-stream';
 import * as json2csv from 'json2csv';
 import { logger } from './logger';
+
 
 export function hex2dec(x: string): number {
     return parseInt(x, 16);
@@ -57,7 +58,7 @@ export function jsonArray2ArrowTable(jsonData: Object[]): Table {
     return df;
 }
 
-export async function getTrawlSurveyHaulData(): Promise<Table> {
+export async function getTrawlSurveyHaulData(startYear: string, endYear: string): Promise<Table> {
     /*
 
 
@@ -69,7 +70,7 @@ export async function getTrawlSurveyHaulData(): Promise<Table> {
     let baseUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.";
     let selectionType = "csv";  // "json"
     let variables = "latitude_hi_prec_dd,longitude_hi_prec_dd,tow_end_timestamp,tow_start_timestamp,trawl_id,vessel";
-    let filters = "year>=2016,year<=2018";
+    let filters = "year>=" + startYear + ",year<=" + endYear;
     let dwUrl = baseUrl + selectionType + "?" + "filters=" + filters + "&" + "variables=" + variables;
     // console.info(`\tdwUrl = ${dwUrl}`);
 
@@ -118,6 +119,13 @@ export async function getHexFiles(dataDir: string): Promise<Array<string>> {
     ]});
     hexFiles = hexFiles.toString().split(",");
     return hexFiles;
+}
+
+export async function getCsvFiles(dataDir: string): Promise<Array<string>> {
+    let csvFiles: string[] = [];
+    csvFiles = fg.sync([dataDir + '/**/*.csv'], {nocase: true});
+    csvFiles = csvFiles.toString().split(",");
+    return csvFiles;
 }
 
 export async function getXmlconFiles(dataDir: string): Promise<Array<string>> {

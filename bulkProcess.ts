@@ -1,27 +1,63 @@
-import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, readdirSync, mkdirSync, existsSync, createReadStream } from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import {Table, Null} from 'apache-arrow';
+import {Table, Float32Vector, DateVector, Int32Vector, Utf8Vector} from 'apache-arrow';
 import * as parser from 'fast-xml-parser';
 import { parseHex } from './src/sbe19plusV2/parseHex';
 import { convertToEngineeringUnits } from './src/sbe19plusV2/convertResults';
-import { getTrawlSurveyHaulData, getHexFiles, getXmlconFiles, saveToFile } from './src/utilities';
+import { getTrawlSurveyHaulData, getHexFiles, getCsvFiles, getXmlconFiles, saveToFile } from './src/utilities';
 import { logger } from './src/logger';
 import * as moment from 'moment';
+import { removeOutliers } from './src/outlierRemoval';
+import { createInterface } from 'readline';
+import * as csv from 'csv';
+import * as papa from 'papaparse';
+import { splitHauls, parseFile, csvToTable, sliceByTimeRange, slice } from './src/structures';
+import { col } from 'apache-arrow/compute/predicate';
 
 logger.info('***** Start data processing.... *****');
 // process.exit(0);
 // setInterval(function(){ process.exit(0); }, 100);
+
+// 
+let dataStruct = [
+    { "colName": "Temperature (degC)", "vectorType": Float32Vector },
+    { "colName": "Pressure (dbars)", "vectorType": Float32Vector },
+    { "colName": "Conductivity (S_per_m)", "vectorType": Float32Vector },
+    { "colName": "Salinity (psu)", "vectorType": Float32Vector },
+    { "colName": "OPTODE Oxygen (ml_per_l)", "vectorType": Float32Vector },
+    { "colName": "Depth (m)", "vectorType": Float32Vector },
+    { "colName": "Latitude (decDeg)", "vectorType": Float32Vector },
+    { "colName": "Longitude (degDeg)", "vectorType": Float32Vector },
+    { "colName": "HaulID", "vectorType": Utf8Vector },
+    { "colName": "DateTime (ISO8601)", "vectorType": DateVector },
+    { "colName": "Year", "vectorType": Int32Vector },
+    { "colName": "Month", "vectorType": Int32Vector },
+    { "colName": "Day", "vectorType": Int32Vector },
+];
+let outputColumns = dataStruct.map((x: any) => {
+    return x["colName"];
+})
+
+// let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
+// "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
+// "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"
+// ];
+
 
 // Sample Data
 const dir = "./data/sbe19plusV2/";
 const hexFileName = "PORT_CTD5048_DO1360CT1460Op302_Hauls_1to5_21May2016.hex";
 const xmlconFileName = "SBE19plusV2_5048.xmlcon";
 
-const dataDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
-const outputDir = path.join(os.homedir(), "Desktop", "CTD output");
-if (!existsSync(outputDir)) {
-    mkdirSync(outputDir);
+const hexDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
+const csvDir = path.join(os.homedir(), "Desktop", "CTD output");
+if (!existsSync(csvDir)) {
+    mkdirSync(csvDir);
+}
+const pointEstimatesDir = path.join(os.homedir(), "Desktop", "Point Estimates");
+if (!existsSync(pointEstimatesDir)) {
+    mkdirSync(pointEstimatesDir);
 }
 
 let currentOutputDir: string = null;
@@ -35,20 +71,22 @@ let strippedArray: string[] = null, lineArray: string[] = null,
     hexFileArray: string[] = null;
 let metrics: number[] = [];
 
-async function bulkProcess() {
+async function bulkConvertData() {
 
     // Retrieve the Trawl Survey Haul Data
     logger.info(`Retrieving haul data`)
     start = moment();
-    const hauls = await getTrawlSurveyHaulData();
+    let startYear = '2016';
+    let endYear = '2018'
+    const hauls = await getTrawlSurveyHaulData(startYear, endYear);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     logger.info(`\tProcessing time - retrieving haul data: ${duration}s`);
 
     // Find all of the hex files
-    logger.info(`Searching for hex files: ${dataDir}`);
+    logger.info(`Searching for hex files: ${hexDir}`);
     start = moment();
-    let hexFilesArray = await getHexFiles(dataDir);
+    let hexFilesArray = await getHexFiles(hexDir);
     writeFileSync(path.join(os.homedir(), "Desktop", "hexFiles.txt"),
         hexFilesArray.join("\n")
     );
@@ -58,9 +96,9 @@ async function bulkProcess() {
     logger.info(`\tProcessing time - getting hex files: ${duration}s`);
 
     // Find all of the xmlcon files
-    logger.info(`Searching for xmlcon files: ${dataDir}`);
+    logger.info(`Searching for xmlcon files: ${hexDir}`);
     start = moment();
-    let xmlconFilesArray = await getXmlconFiles(dataDir);
+    let xmlconFilesArray = await getXmlconFiles(hexDir);
     writeFileSync(path.join(os.homedir(), "Desktop", "xmlconList.txt"),
         xmlconFilesArray.join("\n")
     );
@@ -71,7 +109,7 @@ async function bulkProcess() {
 
     // Prepare hex file list for parsing
     strippedArray = hexFilesArray.map(x => {
-        return x.replace(dataDir.replace(/\\/g, '\/') + "/", "");
+        return x.replace(hexDir.replace(/\\/g, '\/') + "/", "");
     });
 
     // TESTING ONLY
@@ -80,6 +118,8 @@ async function bulkProcess() {
     let idx: number = 0, outputFile: string = null;
     // Must use for ... of syntax for proper ordering, per:  
     //     https://lavrton.com/javascript-loops-how-to-handle-async-await-6252dd3c795/
+
+    // Iterate through all of the hex files and convert to csv's
     for (const x of strippedArray) {
 
         // if (idx < 295) {
@@ -107,11 +147,11 @@ async function bulkProcess() {
         // }
 
         // Create the output directory if it does not exist + outputFile string
-        if (!existsSync(path.join(outputDir, currentYear)))
-            mkdirSync(path.join(outputDir, currentYear));
-        if (!existsSync(path.join(outputDir, currentYear, currentVessel)))
-            mkdirSync(path.join(outputDir, currentYear, currentVessel));
-        currentOutputDir = path.join(outputDir, currentYear, currentVessel);
+        if (!existsSync(path.join(csvDir, currentYear)))
+            mkdirSync(path.join(csvDir, currentYear));
+        if (!existsSync(path.join(csvDir, currentYear, currentVessel)))
+            mkdirSync(path.join(csvDir, currentYear, currentVessel));
+        currentOutputDir = path.join(csvDir, currentYear, currentVessel);
         outputFile = path.join(currentOutputDir, lineArray.slice(-1)[0].slice(0, -3) + "csv");
 
         console.info("\n");
@@ -120,8 +160,8 @@ async function bulkProcess() {
             `${currentPosition}, ${currentCTD} ***`);
         logger.info(`**************************************************`);
 
-        currentHex = path.resolve(path.join(dataDir, strippedArray[idx]));
-        currentXmlcon = path.resolve(path.join(dataDir, currentYear, 
+        currentHex = path.resolve(path.join(hexDir, strippedArray[idx]));
+        currentXmlcon = path.resolve(path.join(hexDir, currentYear, 
             currentYear + "_CTD_ConFiles_Raw", "SBE19plusV2_" + currentCTD + ".xmlcon"))
             
         logger.info(`\txmlcon: ${currentXmlcon}`);
@@ -143,7 +183,7 @@ async function bulkProcess() {
         // Parse hex file and convert to raw, decimal values in arrow data structure
         if (instrument.Name.indexOf("SBE 19plus V2") > -1) {
     
-            // results = await parseHex(currentHex, instrument, sensors, outputFile, hauls, currentVessel);
+            // Parse the hex file
             logger.info(`\tParsing Hex File`);
             start = moment();        
             results = await parseHex(currentHex);
@@ -151,6 +191,7 @@ async function bulkProcess() {
             duration = moment.duration(end.diff(start)).asSeconds();
             logger.info(`\t\tProcessing time - parsing hex file: ${duration}s`);
 
+            // Convert the parsed hex file data to engineering unitst
             logger.info(`\tConverting to Engineering Units`);
             start = moment();        
             df = await convertToEngineeringUnits(instrument, sensors, results["casts"], 
@@ -163,10 +204,6 @@ async function bulkProcess() {
             // Save the results to a csv file
             logger.info(`\tSaving data to a csv file`);
             start = moment();
-            let outputColumns = ["Temperature (degC)", "Pressure (dbars)", "Conductivity (S_per_m)",
-                "Salinity (psu)", "Oxygen (ml_per_l)", "OPTODE Oxygen (ml_per_l)", "Depth (m)",
-                "Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"
-            ];
             await saveToFile(df, "csv", outputFile, outputColumns);
             end = moment();
             duration = moment.duration(end.diff(start)).asSeconds();
@@ -206,4 +243,109 @@ async function bulkProcess() {
 
 }
 
-bulkProcess();
+async function bulkQaQcData() {
+
+    // Retrieve the Trawl Survey Haul Data
+    logger.info(`Retrieving haul data`)
+    start = moment();
+    let startYear = '2016';
+    let endYear = '2018'
+    let hauls = await getTrawlSurveyHaulData(startYear, endYear);
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    logger.info(`\tProcessing time - retrieving haul data: ${duration}s`);
+
+    // Find all of the converted csv files
+    logger.info(`Searching for csv files: ${csvDir}`);
+    start = moment();
+    let csvFilesArray = await getCsvFiles(csvDir);
+    writeFileSync(path.join(os.homedir(), "Desktop", "csvFiles.txt"),
+        csvFilesArray.join("\n")
+    );
+    logger.info(`\tcsv file count: ${csvFilesArray.length}`);
+    end = moment();
+    duration = moment.duration(end.diff(start)).asSeconds();
+    logger.info(`\tProcessing time - getting csv files: ${duration}s`);
+    
+    let thresholdPct: number = 0.05; // Percentage
+    let startPct: number = 0.1; // Percentage
+    let endPct: number = 0.1; // Percentage
+    let rawFile: string = '';
+    let haulsDict = {}, haulTable: Table = null, haulsAvgs = [];
+    let slicedData: Table = null;
+    for (let i in csvFilesArray) {
+
+        // if (parseInt(i) == 1) break;
+
+        logger.info(`Processing ${csvFilesArray[i]}`);
+        start = moment();
+
+        // Read the file
+        rawFile = readFileSync(csvFilesArray[i], "utf8");
+
+        // Convert the csv file to a arrow table
+        let df = await csvToTable(rawFile);
+
+        // Split the table into separate tables based on the haul ID
+        let haulsColName: string = "HaulID";
+        haulsDict = splitHauls(df, haulsColName);
+        // haulsDict = { ...haulsDict, ...tempHauls};
+        
+        // Iterate through each of the hauls
+        for (let x in haulsDict) {
+            logger.info(`\thaul = ${x}`);
+            haulTable = haulsDict[x];
+            logger.info(`\t\tdata size for haul = ${haulTable.count()}`);
+
+            // Slice the data to the haul start and end times
+            let haulDetails = hauls.filter(col("trawl_id").eq(x));
+            logger.info(`haulDetails = ${haulDetails.get(0)}`);
+            let startTime = moment(haulDetails.get(0)["tow_start_timestamp"]).format();
+            let endTime = moment(haulDetails.get(0)["tow_end_timestamp"]).format();
+            slicedData = sliceByTimeRange(haulTable, "DateTime (ISO8601)", startTime, endTime);
+            logger.info(`\t\tstartTime = ${startTime}, endTime = ${endTime}`);
+            logger.info(`\t\tdata size after haul start/end slicing = ${slicedData.count()}`);
+
+            // Slice the data by droping beginning and ending values by startPct and endPct
+            let startCount: number = null, endCount: number = null;
+            startCount = Math.floor(slicedData.count() * startPct);
+            endCount = Math.ceil(slicedData.count() * (1 - endPct));
+            slicedData = slice(slicedData, startCount, endCount);
+            logger.info(`\t\tstartCount = ${startCount}, endCount = ${endCount}`)
+            logger.info(`\t\tdata size after pct slicing = ${slicedData.count()}`);
+
+            // Auto Remove outliers
+            let averages = await removeOutliers(slicedData, thresholdPct);
+            averages["haulID"] = x;
+            haulsAvgs.push(averages);
+        }
+        end = moment();
+        duration = moment.duration(end.diff(start)).asSeconds();
+        logger.info(`\tProcessing time: ${duration}s`);
+    
+    }
+    // Insert the averages into the Haul Characteristics table
+    let haulKeys: any = Object.keys(haulsAvgs);
+    logger.info(`hauls = ${haulKeys}`);
+    let tempVec = haulsAvgs.map((x: any) => {
+        return x["Temperature (degC)"];
+    });
+    logger.info(`tempVec = ${tempVec}`);
+
+    for (let x in haulsAvgs) {
+        logger.info(`Attaching haul ${x} data:  ${JSON.stringify(haulsAvgs[x])}`);
+    }
+
+    // saveToFile()
+    // Write out the resultant csv file containing all of the hauls + averages
+    // writeFileSync(path.join(os.homedir(), "Desktop", "haulsWithAverages.csv"),
+    //     csvFilesArray.join("\n")
+    // );
+
+}
+
+
+// bulkConvertData();
+
+
+bulkQaQcData();
