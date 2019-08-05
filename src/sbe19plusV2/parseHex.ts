@@ -1,10 +1,9 @@
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
-import { Table, FloatVector, Dictionary } from 'apache-arrow';
+import { Table, FloatVector } from 'apache-arrow';
 import * as moment from 'moment-timezone';
 import * as math from 'mathjs';
 import { hex2dec } from '../utilities';
-import { convertToEngineeringUnits } from './convertResults';
 
 
 // export async function parseHex(hexFile: string, instrument: Dictionary, coefficients: Dictionary[],
@@ -21,7 +20,7 @@ export async function parseHex(hexFile: string): Promise<Object> {
     let subparts: any = null;
     let pressureSensor = {}, extraSensors = {}, voltages = {}, casts = [];
     let castNum: string, castStartDate: Date, castStartEnd: Date, castStartNum: number, castEndNum: number, castAvg: number;
-    let voltageOffsets = {}, tempVoltage: string = "", pumpDelay: number = null;
+    let voltageOffsets = {}, tempVoltage: string = "", pumpDelay: number = null, mode: string = "";
 
     const parsingRules = [
         {"sensor": "Temperature", "variable": "Temperature A/D Counts", "size": 6, "data": null, "isADCount": true, "operations": null},
@@ -56,7 +55,7 @@ export async function parseHex(hexFile: string): Promise<Object> {
         {"sensor": "Clock", "variable": "Time, Seconds since January 1, 2000", "size": 8, "data": null, "operations": null}
     ]
     let currentChar: number = 0, dataRow: number = 0, value: any = null, schema = [];
-    let df: Table = null;
+    let df: Table = null, i: number = -1, rule: any = null;
 
     // let output = new stream.PassThrough({ objectMode: true });
     // let output: any = null;
@@ -66,143 +65,168 @@ export async function parseHex(hexFile: string): Promise<Object> {
 
     // rl.on('line', (line: string, lineNum: number = line_counter()) => {
     // for await (const line of rl[Symbol.asyncIterator]()) {
-    for await (const line of rl) {
-   
-        // console.info(`line ${lineNum} = ${line}`);
-        // if ((lineNum > dataStartLine) && (dataStartLine !== -1)) lineReader.close();
+    try {
+        for await (const line of rl) {
 
-        if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
-            // Parse the ending date/time and serial number
-            const lineParts = line.split("SERIAL NO.").map(s => s.trim());
-            if (lineParts.length === 2) {
-                serialNumber = lineParts[1].split(' ')[0];
-                endDateTime = lineParts[1].replace(serialNumber, "").trim()
-                // console.info('\tendDateTime: ' + endDateTime);
-            }
-        }
+            // if (lineNum % 100 === 0) console.info(`line ${lineNum} = ${line}`);
 
-        if (line.startsWith("* samples")) {
-            parts = line.split(",").map(s => s.replace("*", "").trim());
-            subparts = parts[0].split("=")
-            samples = parseInt(subparts[1]);
-        }
-
-        if (line.startsWith("* mode =")) {
-            parts = line.split(", ");
-            if (parts.length === 3) {
-                pumpDelay = parseFloat(parts[2].replace("pump delay =", "").replace("sec", ""))
-            }
-        }
-
-        // ToDo - Parse autorun + magnetic mode
-
-        if (line.startsWith("* pressure sensor")) {
-            // Parse pressure sensor information
-            parts = line.split(",").map(s => s.replace("*", "").trim());
-            parts.forEach((x: any) => {
-                subparts = x.split("=").map(s => s.trim());
-                if (subparts.length === 2) 
-                    pressureSensor[subparts[0]] = subparts[1];
-            })
-        }
-
-        if (line.startsWith("* SBE 38")) {
-            // Parse for determining if extra sensors exist or not
-            parts = line.split(",");
-            parts.forEach((x: any) => {
-                subparts = x.split("=").map(s => s.replace("*", "").trim());
-                if (subparts.length === 2) {
-                    extraSensors[subparts[0].replace(/ /g,'')] = subparts[1] === "yes" ? true : false;
-                }
-            })
-        }
-
-        if (line.startsWith("* Ext Volt")) {
-            // Parse extra voltage data
-            parts = line.split(",").map(s => s.replace("*", "").trim());
-            parts.forEach((x: any) => {
-                subparts = x.split("=").map(s => s.trim());
-                if (subparts.length === 2) 
-                    voltages[subparts[0].replace("Ext", "External").replace("Volt", "Voltage")] = 
-                        subparts[1] === "yes" ? true : false;
-            })
-        }
-
-        if ((line.startsWith("* volt ")) && (line.includes("offset ="))) {
-            parts = line.split(":").map(s => s.replace("* volt", "Voltage".trim()));
-            tempVoltage = parts[0];
-            if (parts.length === 2) {
-                subparts = parts[1].split(",");
-                voltageOffsets[tempVoltage] = {
-                    "offset": parseFloat(subparts[0].replace("offset =", "").trim()),
-                    "slope": parseFloat(subparts[1].replace("slope =", "").trim())
+            if ((line.startsWith('* SBE 19plus V 2.5.2')) && (endDateTime === null)) {
+                // Parse the ending date/time and serial number
+                const lineParts = line.split("SERIAL NO.").map((s: any) => s.trim());
+                if (lineParts.length === 2) {
+                    serialNumber = lineParts[1].split(' ')[0];
+                    endDateTime = lineParts[1].replace(serialNumber, "").trim()
+                    // console.info('\tendDateTime: ' + endDateTime);
                 }
             }
-        }
 
-        if (line.startsWith("* cast")) {
-            // Parse casts
-            parts = line.replace("* cast", "").trim().split(",");
-            if (parts.length >= 1) {
-                subparts = parts[0].split("samples").map(s => s.trim());
-                castNum = subparts[0].split(" ")[0];
-                // console.info(`start Date: ${subparts[0].replace(castNum, "").trim()}`);
-                castStartDate = moment(subparts[0].replace(castNum, "").trim(), "DD MMMM YYYY HH:mm:ss").tz('America/Los_Angeles').toDate();
-                castStartEnd = subparts[1].split("to").map(s => s.trim());
-                castStartNum = parseInt(castStartEnd[0]);
-                castEndNum = parseInt(castStartEnd[1]);
-                castAvg = parseInt(parts[1].split("=").map(s => s.trim())[1]);
-                casts.push({
-                    "cast": parseInt(castNum),
-                    "startDate": castStartDate,
-                    "startNum": castStartNum,
-                    "endNum": castEndNum,
-                    "avg": castAvg
-                });
+            if (line.startsWith("* samples")) {
+                parts = line.split(",").map((s: any) => s.replace("*", "").trim());
+                subparts = parts[0].split("=")
+                samples = parseInt(subparts[1]);
             }
-        }
 
-        if (line.startsWith('*END*')) {
-            // Parse where the data lines start
-            dataStartLine = lineNum + 1; 
-        }
-
-        if ((lineNum >= dataStartLine) && (dataStartLine !== -1)) {
-            
-            // Parse Data
-            currentChar = 0;
-            value = null;
-
-            parsingRules.forEach(rule => {
-                if (((rule.sensor.startsWith("Voltage")) && !(voltages[rule.variable])) ||
-                    ((rule.sensor in extraSensors) && !(extraSensors[rule.sensor]))) {
-                    return;
+            if (line.startsWith("* mode =")) {
+                parts = line.split(", ");
+                if (parts.length === 3) {
+                    mode = parts[0].replace("* mode =", "").trim();
+                    pumpDelay = parseFloat(parts[2].replace("pump delay =", "").replace("sec", ""))
                 }
-                try {
+            }
 
-                    value = hex2dec(line.slice(currentChar, currentChar+rule.size));
-                    if ((rule.operations !== null) && !(isNaN(value))) {
-                        rule.operations.forEach((operation: any) => {
-                            value = operation.op(value, operation.value);   // Perform the rule math operation on the value
-                        });
+            // ToDo - Parse autorun + magnetic mode
+
+            if (line.startsWith("* pressure sensor")) {
+                // Parse pressure sensor information
+                parts = line.split(",").map((s: any) => s.replace("*", "").trim());
+                parts.forEach((x: any) => {
+                    subparts = x.split("=").map((s: any) => s.trim());
+                    if (subparts.length === 2) 
+                        pressureSensor[subparts[0]] = subparts[1];
+                })
+            }
+
+            if (line.startsWith("* SBE 38")) {
+                // Parse for determining if extra sensors exist or not
+                // includes SBE 38, WETLABS, OPTODE, SBE63, Gas Tension Device
+                // SBE 19plusV2 files examined did not include:  Dual Gas Tension Device (DualGTP), SeaFET
+                parts = line.split(",");
+                parts.forEach((x: any) => {
+                    subparts = x.split("=").map((s: any) => s.replace("*", "").trim());
+                    if (subparts.length === 2) {
+                        extraSensors[subparts[0].replace(/ /g,'')] = subparts[1] === "yes" ? true : false;
                     }
-                    if ((value !== null) && !(isNaN(value))) {
-                        if (lineNum === dataStartLine) {
-                            schema.push(rule.variable)
-                            rule.data = new Float32Array(samples);
+                })
+            }
+
+            if (line.startsWith("* Ext Volt")) {
+                // Parse extra voltage data
+                parts = line.split(",").map((s: any) => s.replace("*", "").trim());
+                parts.forEach((x: any) => {
+                    subparts = x.split("=").map((s: any) => s.trim());
+                    if (subparts.length === 2) 
+                        voltages[subparts[0].replace("Ext", "External").replace("Volt", "Voltage")] = 
+                            subparts[1] === "yes" ? true : false;
+                })
+            }
+
+            if ((line.startsWith("* volt ")) && (line.includes("offset ="))) {
+                parts = line.split(":").map((s: any) => s.replace("* volt", "Voltage".trim()));
+                tempVoltage = parts[0];
+                if (parts.length === 2) {
+                    subparts = parts[1].split(",");
+                    voltageOffsets[tempVoltage] = {
+                        "offset": parseFloat(subparts[0].replace("offset =", "").trim()),
+                        "slope": parseFloat(subparts[1].replace("slope =", "").trim())
+                    }
+                }
+            }
+
+            if (line.startsWith("* cast")) {
+                // Parse casts
+                parts = line.replace("* cast", "").trim().split(",");
+                if (parts.length >= 1) {
+                    subparts = parts[0].split("samples").map((s: any) => s.trim());
+                    castNum = subparts[0].split(" ")[0];
+                    // console.info(`castNum = ${castNum}, start Date: ${subparts[0].replace(castNum, "").trim()}`);
+                    castStartDate = moment(subparts[0].replace(castNum, "").trim(), "DD MMMM YYYY HH:mm:ss").tz('America/Los_Angeles').format(); //.toDate();
+                    // console.info(`parsed startDate: ${castStartDate}`);
+                    castStartEnd = subparts[1].split("to").map((s: any) => s.trim());
+                    castStartNum = parseInt(castStartEnd[0]);
+                    castEndNum = parseInt(castStartEnd[1]);
+                    castAvg = parseInt(parts[1].split("=").map((s: any) => s.trim())[1]);
+                    casts.push({
+                        "cast": parseInt(castNum),
+                        "startDate": castStartDate,
+                        "startNum": castStartNum,
+                        "endNum": castEndNum,
+                        "avg": castAvg
+                    });
+                }
+            }
+
+            if (line.startsWith('*END*')) {
+                // Parse where the data lines start
+                dataStartLine = lineNum + 1; 
+            }
+
+            if ((lineNum >= dataStartLine) && (dataStartLine !== -1)) {
+                // Parse Data
+                currentChar = 0;
+                value = null;
+
+                // parsingRules.forEach(rule => {
+                for await (const rule of parsingRules) {
+                    // if (lineNum === 100) console.info(`rule =${JSON.stringify(rule)}`);
+
+                    try {
+                        // TODO - How to skip the SeaFET extra sensors and potentially the Dual Gas Tension Devices (DualGTP)?
+                        // Currently I just hardcoded them in here.  The issue is that the flags for SeaFET or DualGTP do not 
+                        // even appear in the header information of the hex file that we have for trawl survey, so how do we deal with them?
+                        if ((rule.sensor.startsWith("Voltage") && !(voltages[rule.variable])) ||
+                            (rule.sensor in extraSensors && !(extraSensors[rule.sensor])) ||
+                            (rule.sensor === "Clock" && mode === "profile") ||
+                            (rule.sensor === "SeaFET") || 
+                            (rule.sensor === "DualGTP") || 
+                            (rule.sensor === "DualGasTensionDevice")                  
+                            ) {
+                            continue;
                         }
-                        rule.data[dataRow] = value;
-                        currentChar += rule.size;
+
+                        // console.info(`rule made it, rule = ${JSON.stringify(rule)}`);
+
+                        if (currentChar < line.length && currentChar + rule.size <= line.length) {
+                            value = hex2dec(line.slice(currentChar, currentChar+rule.size));
+                            if ((rule.operations !== null) && !(isNaN(value))) {
+                                // rule.operations.forEach((operation: any) => {
+                                for await (const operation of rule.operations) {
+                                    value = operation.op(value, operation.value);   // Perform the rule math operation on the value
+                                }
+                                // });
+                            }
+                            if ((value !== null) && !(isNaN(value))) {
+                                if (lineNum === dataStartLine) {
+                                    schema.push(rule.variable)
+                                    rule.data = new Float32Array(samples);
+                                }
+                                rule.data[dataRow] = value;
+                                currentChar += rule.size;
+                            }    
+                        }
+                    } catch (e) {
+                        console.error(`error, file=${hexFile}: ${e}`);
                     }
-                } catch (e) {
-                    console.error(`error, file=${hexFile}: ${e}`);
                 }
-            });
-            dataRow += 1;
+                // });
+                dataRow += 1;
+            }
+            lineNum += 1;
         }
-        lineNum += 1;
-    // });
+    } catch (e2) {
+        console.info(`ERROR ERROR ERROR: ${e2}`)
+        console.info(`\tparsing line number: ${e2.lineNumber}`);
     }
+
 
     let dataArrays = [];
     let tempArray: any = null;
@@ -216,27 +240,4 @@ export async function parseHex(hexFile: string): Promise<Object> {
         "df": df, "casts": casts, "voltageOffsets": voltageOffsets, "pumpDelay": pumpDelay
     }
     return results;
-
-
-
-
-
-    // rl.on('close', function() {
-    //     let end = moment();
-    //     let duration = moment.duration(end.diff(start)).asSeconds();
-    //     console.info(`\tProcessing time - parsing hex file: ${duration}s`);
-
-    //     let dataArrays = [];
-    //     let tempArray: any = null;
-    //     schema.forEach(x => {
-    //         tempArray = parsingRules.find(y => y.variable === x);
-    //         dataArrays.push(FloatVector.from(tempArray.data));
-    //     })
-    //     df = Table.new(dataArrays, schema);
-    //     return df;
-
-    //     console.info(`\t\tdf = ${df.length}`);
-    //     convertToEngineeringUnits(instrument, coefficients, casts, 
-    //         voltageOffsets, pumpDelay, df, outputFile, hauls, vessel);
-    // });
 }

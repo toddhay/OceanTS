@@ -21,19 +21,19 @@ logger.info('***** Start data processing.... *****');
 
 // 
 let dataStruct = [
-    { "colName": "Temperature (degC)", "vectorType": Float32Vector },
-    { "colName": "Pressure (dbars)", "vectorType": Float32Vector },
-    { "colName": "Conductivity (S_per_m)", "vectorType": Float32Vector },
-    { "colName": "Salinity (psu)", "vectorType": Float32Vector },
-    { "colName": "OPTODE Oxygen (ml_per_l)", "vectorType": Float32Vector },
-    { "colName": "Depth (m)", "vectorType": Float32Vector },
-    { "colName": "Latitude (decDeg)", "vectorType": Float32Vector },
-    { "colName": "Longitude (degDeg)", "vectorType": Float32Vector },
-    { "colName": "HaulID", "vectorType": Utf8Vector },
-    { "colName": "DateTime (ISO8601)", "vectorType": DateVector },
-    { "colName": "Year", "vectorType": Int32Vector },
-    { "colName": "Month", "vectorType": Int32Vector },
-    { "colName": "Day", "vectorType": Int32Vector },
+    { "colName": "Temperature (degC)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Pressure (dbars)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Conductivity (S_per_m)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Salinity (psu)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "OPTODE Oxygen (ml_per_l)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Depth (m)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Latitude (decDeg)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Longitude (decDeg)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "HaulID", "vectorType": Utf8Vector, "vector": null },
+    { "colName": "DateTime (ISO8601)", "vectorType": DateVector, "vector": null },
+    { "colName": "Year", "vectorType": Int32Vector, "vector": null },
+    { "colName": "Month", "vectorType": Int32Vector, "vector": null },
+    { "colName": "Day", "vectorType": Int32Vector, "vector": null },
 ];
 let outputColumns = dataStruct.map((x: any) => {
     return x["colName"];
@@ -50,7 +50,9 @@ const dir = "./data/sbe19plusV2/";
 const hexFileName = "PORT_CTD5048_DO1360CT1460Op302_Hauls_1to5_21May2016.hex";
 const xmlconFileName = "SBE19plusV2_5048.xmlcon";
 
-const hexDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
+let hexDir = path.join(os.homedir(), "Desktop", "CTD");  // Change to the real dir for processing
+// hexDir = path.join(os.homedir(), "Desktop", "CTD_Test");  // Change to the real dir for processing
+
 const csvDir = path.join(os.homedir(), "Desktop", "CTD output");
 if (!existsSync(csvDir)) {
     mkdirSync(csvDir);
@@ -62,7 +64,7 @@ if (!existsSync(pointEstimatesDir)) {
 
 let currentOutputDir: string = null;
 let start: moment.Moment = null, end: moment.Moment = null, duration: number = null,
-    hex_file_start: moment.Moment = null;
+    hex_file_start: moment.Moment = null, bulkStart: moment.Moment = null, bulkEnd: moment.Moment = null;
 let df: Table = null, results: Object = null;
 let currentHex: string = null, currentXmlcon: string = null, 
     currentYear: string = null, currentVessel: string = null,
@@ -113,14 +115,14 @@ async function bulkConvertData() {
     });
 
     // TESTING ONLY
-    strippedArray = strippedArray.slice(0, 3);
+    // strippedArray = strippedArray.slice(0, 3);
 
     let idx: number = 0, outputFile: string = null;
     // Must use for ... of syntax for proper ordering, per:  
     //     https://lavrton.com/javascript-loops-how-to-handle-async-await-6252dd3c795/
 
     // Iterate through all of the hex files and convert to csv's
-    for (const x of strippedArray) {
+    for await (const x of strippedArray) {
 
         // if (idx < 295) {
         //     idx += 1;
@@ -185,7 +187,7 @@ async function bulkConvertData() {
     
             // Parse the hex file
             logger.info(`\tParsing Hex File`);
-            start = moment();        
+            start = moment();     
             results = await parseHex(currentHex);
             end = moment();
             duration = moment.duration(end.diff(start)).asSeconds();
@@ -236,21 +238,19 @@ async function bulkConvertData() {
     logger.info('Total Processing time');
     logger.info(`\t${idx} items, total time: ${totalTime.toFixed(1)}s, ` +
         `time per item = ${(totalTime/idx).toFixed(1)}s`);
-
-    // ToDo - Auto QA/QC the new arrow data structure
-
-    // ToDo - Persist the data to disk
-
 }
 
-async function bulkQaQcData() {
+async function bulkCalculatePointEstimates() {
+
+    // Bulk Start
+    bulkStart = moment();
 
     // Retrieve the Trawl Survey Haul Data
     logger.info(`Retrieving haul data`)
     start = moment();
     let startYear = '2016';
     let endYear = '2018'
-    let hauls = await getTrawlSurveyHaulData(startYear, endYear);
+    let masterHauls = await getTrawlSurveyHaulData(startYear, endYear);
     end = moment();
     duration = moment.duration(end.diff(start)).asSeconds();
     logger.info(`\tProcessing time - retrieving haul data: ${duration}s`);
@@ -271,81 +271,136 @@ async function bulkQaQcData() {
     let startPct: number = 0.1; // Percentage
     let endPct: number = 0.1; // Percentage
     let rawFile: string = '';
-    let haulsDict = {}, haulTable: Table = null, haulsAvgs = [];
-    let slicedData: Table = null;
+    let dfHauls = {}, haulTable: Table = null, haulsAvgs = [];
+    let slicedHaulTimes: Table = null, slicedHaulNumber: Table = null, slicedHaulPcts: Table = null;
+    let startIdx: number = null, endIdx: number = null;
+
+
     for (let i in csvFilesArray) {
 
-        // if (parseInt(i) == 1) break;
+        if (parseInt(i) === 1) break;
 
-        logger.info(`Processing ${csvFilesArray[i]}`);
-        start = moment();
+        try {
 
-        // Read the file
-        rawFile = readFileSync(csvFilesArray[i], "utf8");
+            logger.info(`Processing ${csvFilesArray[i]}`);
+            start = moment();
 
-        // Convert the csv file to a arrow table
-        let df = await csvToTable(rawFile);
+            // Read the file
+            rawFile = readFileSync(csvFilesArray[i], "utf8");
 
-        // Split the table into separate tables based on the haul ID
-        let haulsColName: string = "HaulID";
-        haulsDict = splitHauls(df, haulsColName);
-        // haulsDict = { ...haulsDict, ...tempHauls};
-        
-        // Iterate through each of the hauls
-        for (let x in haulsDict) {
-            logger.info(`\thaul = ${x}`);
-            haulTable = haulsDict[x];
-            logger.info(`\t\tdata size for haul = ${haulTable.count()}`);
+            // Convert the csv file to a arrow table
+            let df = await csvToTable(rawFile);
 
-            // Slice the data to the haul start and end times
-            let haulDetails = hauls.filter(col("trawl_id").eq(x));
-            logger.info(`haulDetails = ${haulDetails.get(0)}`);
-            let startTime = moment(haulDetails.get(0)["tow_start_timestamp"]).format();
-            let endTime = moment(haulDetails.get(0)["tow_end_timestamp"]).format();
-            slicedData = sliceByTimeRange(haulTable, "DateTime (ISO8601)", startTime, endTime);
-            logger.info(`\t\tstartTime = ${startTime}, endTime = ${endTime}`);
-            logger.info(`\t\tdata size after haul start/end slicing = ${slicedData.count()}`);
+            // Split the table into separate tables based on the haul ID
+            let haulsColName: string = "HaulID";
+            dfHauls = splitHauls(df, haulsColName);
+            
+            // Iterate through each of the hauls from the current csv file
+            for (let x in dfHauls) {
 
-            // Slice the data by droping beginning and ending values by startPct and endPct
-            let startCount: number = null, endCount: number = null;
-            startCount = Math.floor(slicedData.count() * startPct);
-            endCount = Math.ceil(slicedData.count() * (1 - endPct));
-            slicedData = slice(slicedData, startCount, endCount);
-            logger.info(`\t\tstartCount = ${startCount}, endCount = ${endCount}`)
-            logger.info(`\t\tdata size after pct slicing = ${slicedData.count()}`);
+                try {
 
-            // Auto Remove outliers
-            let averages = await removeOutliers(slicedData, thresholdPct);
-            averages["haulID"] = x;
-            haulsAvgs.push(averages);
+                    logger.info(`\thaul = ${x}`);
+                    startIdx = dfHauls[x]['startIdx'];
+                    endIdx = dfHauls[x]['endIdx'];
+
+                    let masterHaul = masterHauls.filter(col('trawl_id').eq(x));
+                    for (let masterHaulDetails of masterHaul){
+                        logger.info(`\t\tdw haul details = ${masterHaulDetails}`);
+
+                        let towDateStart = moment(masterHaulDetails["tow_start_timestamp"]);
+                        let towDateEnd = moment(masterHaulDetails["tow_start_timestamp"]);
+                        let startTime = masterHaulDetails["sampling_start_hhmmss"];
+                        let endTime = masterHaulDetails["sampling_end_hhmmss"];
+                        
+                        startTime = towDateStart.set({'hour': startTime.slice(0,2), 'minute': startTime.slice(2,4), 
+                            'second': startTime.slice(4,6)});
+                        endTime = towDateEnd.set({'hour': endTime.slice(0,2), 'minute': endTime.slice(2,4), 
+                            'second': endTime.slice(4,6)});
+                        logger.info(`\t\tdw startTime - sampling = ${startTime.format('HH:mm:ss')}, endTime = ${endTime.format('HH:mm:ss')}`);
+
+                        let slicedHaulNumber = slice(df, startIdx, endIdx);
+                        let csvStartTime = moment(slicedHaulNumber.get(0)['DateTime (ISO8601)']);
+                        let csvEndTime = moment(slicedHaulNumber.get(slicedHaulNumber.count()-1)['DateTime (ISO8601)']);
+
+                        logger.info(`\t\tHaul Number Slicing`)
+                        logger.info(`\t\t\tData size = ${slicedHaulNumber.count()}`);
+                        logger.info(`\t\t\tstartIdx = ${startIdx}, endIdx = ${endIdx}`);
+                        logger.info(`\t\t\tstartTime = ${csvStartTime.format('MM/DD/YYYY HH:mm:ss')}, endTime = ${csvEndTime.format('MM/DD/YYYY HH:mm:ss')}`)
+
+                        logger.info(`\t\tHaul Start/End Time Slicing`);
+                        slicedHaulTimes = sliceByTimeRange(slicedHaulNumber, "DateTime (ISO8601)", startTime, endTime);
+                        logger.info(`\t\t\tData size = ${slicedHaulTimes.count()}`);
+                        logger.info(`\t\t\tstartTime = ${startTime.format('HH:mm:ss')}, endTime = ${endTime.format('HH:mm:ss')}`);
+
+                        if (slicedHaulTimes.count() > 0) {
+
+                            // Slice the data by droping beginning and ending values by startPct and endPct
+                            let startCount: number = null, endCount: number = null;
+                            startCount = Math.floor(slicedHaulTimes.count() * startPct);
+                            endCount = Math.ceil(slicedHaulTimes.count() * (1 - endPct));
+                            slicedHaulPcts = slice(slicedHaulTimes, startCount, endCount);
+                            logger.info(`\t\tHaul Percents Slicing`); 
+                            logger.info(`\t\t\tData size  = ${slicedHaulPcts.count()}`);
+                            // logger.info(`\t\t\tstartTime = ${}, endTime = ${}`);
+                            logger.info(`\t\t\tstartCount = ${startCount}, endCount = ${endCount}`)
+
+                            // Auto Remove outliers
+                            let averages = await removeOutliers(slicedHaulPcts, thresholdPct);
+                            // averages["haulID"] = x;
+                            haulsAvgs.push(averages);
+                        } else {
+                            logger.info(`\t\tNo matching data found, skipping the haul`);
+                        }
+                    }
+
+                } catch (haulError) {
+                    logger.error(`Error processing haul ${x}: ${haulError}`);
+                }
+ 
+            }
+            end = moment();
+            duration = moment.duration(end.diff(start)).asSeconds();
+            logger.info(`\tProcessing time: ${duration}s`);
+
+        } catch (fileError) {
+            logger.error(`Error processing csv output file ${csvFilesArray[i]}: ${fileError}`)
         }
-        end = moment();
-        duration = moment.duration(end.diff(start)).asSeconds();
-        logger.info(`\tProcessing time: ${duration}s`);
-    
     }
+
     // Insert the averages into the Haul Characteristics table
-    let haulKeys: any = Object.keys(haulsAvgs);
-    logger.info(`hauls = ${haulKeys}`);
-    let tempVec = haulsAvgs.map((x: any) => {
-        return x["Temperature (degC)"];
-    });
-    logger.info(`tempVec = ${tempVec}`);
-
-    for (let x in haulsAvgs) {
-        logger.info(`Attaching haul ${x} data:  ${JSON.stringify(haulsAvgs[x])}`);
+    for (let x in dataStruct) {
+        let item = dataStruct[x];
+        item["vector"] = haulsAvgs.map((y: any) => {
+            return y[item["colName"]];
+        })
+        // logger.info(`${item["colName"]} vector: ${item["vector"]}`);
     }
+    let finalArray = dataStruct.map((x: any) => {
+        if (x["vectorType"] === DateVector) {
+            return Utf8Vector.from(x["vector"]);
+        } else {
+            return x["vectorType"].from(x["vector"]);
+        }
+    });
+    let finalCols = dataStruct.map((x: any) => {
+        return x["colName"];
+    });
+    logger.info(`finalCols = ${finalCols}`);
+    // logger.info(`finalArray = ${finalArray}`);
 
-    // saveToFile()
-    // Write out the resultant csv file containing all of the hauls + averages
-    // writeFileSync(path.join(os.homedir(), "Desktop", "haulsWithAverages.csv"),
-    //     csvFilesArray.join("\n")
-    // );
+    let dfFinal = Table.new(finalArray, finalCols);
+
+    // Save the point estimates out to a final csv file
+
+    let pointEstimatesFile = path.join(pointEstimatesDir, "pointEstimates.csv");
+    await saveToFile(dfFinal, "csv", pointEstimatesFile, finalCols);
+
+    bulkEnd = moment();
+    duration = moment.duration(bulkEnd.diff(bulkStart)).asSeconds();
+    logger.info(`\tBulk Processing time: ${duration} seconds, ${duration/60} minutes, ${duration/3600} hours`);
 
 }
 
-
 // bulkConvertData();
-
-
-bulkQaQcData();
+bulkCalculatePointEstimates();

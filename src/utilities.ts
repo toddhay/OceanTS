@@ -69,7 +69,7 @@ export async function getTrawlSurveyHaulData(startYear: string, endYear: string)
     // Retrieve Trawl Survey Haul Characteristics data from FRAM Data Warehouse
     let baseUrl = "https://www.nwfsc.noaa.gov/data/api/v1/source/trawl.operation_haul_fact/selection.";
     let selectionType = "csv";  // "json"
-    let variables = "latitude_hi_prec_dd,longitude_hi_prec_dd,tow_end_timestamp,tow_start_timestamp,trawl_id,vessel";
+    let variables = "latitude_hi_prec_dd,longitude_hi_prec_dd,tow_end_timestamp,tow_start_timestamp,trawl_id,vessel,sampling_start_hhmmss,sampling_end_hhmmss";
     let filters = "year>=" + startYear + ",year<=" + endYear;
     let dwUrl = baseUrl + selectionType + "?" + "filters=" + filters + "&" + "variables=" + variables;
     // console.info(`\tdwUrl = ${dwUrl}`);
@@ -189,22 +189,35 @@ export async function addHaulInfoToTable(df: Table, casts: Object[], scanRate: n
         day = new Array(df.length);
     let filteredCasts: Object[] = null;
     let currentDateTime: moment.Moment = null;
+    let secondsToAdd: number = -1;
 
     df.scan((idx) => {
         filteredCasts = casts.filter(x => {
             return idx >= x['startNum'] - 1 && idx < x['endNum'];
         })
-        if ("latitude" in filteredCasts[0]) {
-            latitude[idx] = filteredCasts[0]["latitude"];
-            longitude[idx] = filteredCasts[0]["longitude"];
-            haulID[idx] = filteredCasts[0]["haulID"];
+        if (filteredCasts.length === 1) {
+            if ("latitude" in filteredCasts[0]) {
+                latitude[idx] = filteredCasts[0]["latitude"];
+                longitude[idx] = filteredCasts[0]["longitude"];
+                haulID[idx] = filteredCasts[0]["haulID"];
+            }
+            if ("startDate" in filteredCasts[0] && "startNum" in filteredCasts[0]) {
+                if (idx >= filteredCasts[0]["startNum"] - 1) {
+                    secondsToAdd = (idx - filteredCasts[0]["startNum"])/scanRate;   
+                    currentDateTime = moment(filteredCasts[0]["startDate"])
+                        .add(secondsToAdd, "seconds").tz("America/Los_Angeles");
+
+                    // Testing purposes, output some intermediary values to see if they are correct or not
+                    // if (idx % 1000 === 0) {
+                    //     logger.info(`\t\tidx = ${idx}, secondsToAdd = ${secondsToAdd}, startDate = ${filteredCasts[0]["startDate"]}, currentTime = ${currentDateTime.format()}`);
+                    // }
+                    isoDateTime[idx] = currentDateTime.format();
+                    year[idx] = currentDateTime.format("YYYY");
+                    month[idx] = currentDateTime.format("MM");
+                    day[idx] = currentDateTime.format("DD");
+                }
+            }
         }
-        currentDateTime = moment(filteredCasts[0]["startDate"])
-            .add(idx/scanRate, "seconds").tz("America/Los_Angeles");
-        isoDateTime[idx] = currentDateTime.format();
-        year[idx] = currentDateTime.format("YYYY");
-        month[idx] = currentDateTime.format("MM");
-        day[idx] = currentDateTime.format("DD");
     }, (batch) => {} );
     let newCols = ["Latitude (decDeg)", "Longitude (decDeg)", "HaulID", "DateTime (ISO8601)", "Year", "Month", "Day"];
     df = df.assign(Table.new([Float32Vector.from(latitude), 
