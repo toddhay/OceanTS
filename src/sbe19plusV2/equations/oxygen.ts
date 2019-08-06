@@ -98,7 +98,7 @@ export function oxygen_sbe43(df: Table, colName: string, c: Object, scanRate: nu
             p = col("Pressure (dbars)").bind(batch);
             v = col(colName).bind(batch);
         });
-        let newCol: string = "Oxygen (ml_per_l)";
+        let newCol: string = "Oxygen SBE43 (ml_per_l)";
         df = df.assign(Table.new([Float32Vector.from(oxy)], [newCol]));
     } catch(e) {
         console.log(e);
@@ -120,7 +120,7 @@ export function oxygen_optode(df: Table, colName: string, c:Object): Table {
        }, (batch) => {
            v = col(colName).bind(batch);
        });
-       let newCol: string = "OPTODE Oxygen (ml_per_l)";
+       let newCol: string = "Oxygen OPTODE (ml_per_l)";
        df = df.assign(Table.new([Float32Vector.from(oxy)], [newCol]));
    } catch(e) {
        console.log(e);

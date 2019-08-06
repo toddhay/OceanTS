@@ -41,7 +41,6 @@ export async function convertToEngineeringUnits (instrument: Object, coefficient
     df = await salinity(df);
 
     // Oxygen, SBE 43 (ml_per_l)
-
     // ToDo Add Voltage 0 offset/slope
     df = await oxygen_sbe43(df, "External Voltage 0", coefficients[3]["OxygenSensor"], scanRate);
 

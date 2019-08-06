@@ -25,7 +25,8 @@ let dataStruct = [
     { "colName": "Pressure (dbars)", "vectorType": Float32Vector, "vector": null },
     { "colName": "Conductivity (S_per_m)", "vectorType": Float32Vector, "vector": null },
     { "colName": "Salinity (psu)", "vectorType": Float32Vector, "vector": null },
-    { "colName": "OPTODE Oxygen (ml_per_l)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Oxygen SBE43 (ml_per_l)", "vectorType": Float32Vector, "vector": null },
+    { "colName": "Oxygen OPTODE (ml_per_l)", "vectorType": Float32Vector, "vector": null },
     { "colName": "Depth (m)", "vectorType": Float32Vector, "vector": null },
     { "colName": "Latitude (decDeg)", "vectorType": Float32Vector, "vector": null },
     { "colName": "Longitude (decDeg)", "vectorType": Float32Vector, "vector": null },
@@ -216,13 +217,13 @@ async function bulkConvertData() {
             //     sliceStart: number = 0, //df.length - sliceSize, 
             //     sliceEnd: number = sliceStart + sliceSize;
             // try {
-                // outputColumns.forEach(x => {
-                //     results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
-                //     console.info(`\t${x}: ${results}`);
-                // });
-                // console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
-                // console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
-                // console.info(`Casts: ${JSON.stringify(casts)}`);
+            //     outputColumns.forEach(x => {
+            //         results = df.getColumn(x).toArray().slice(sliceStart, sliceEnd);
+            //         console.info(`\t${x}: ${results}`);
+            //     });
+            //     console.info(`Schema: ${df.schema.fields.map(x => x.name)}`);
+            //     console.info(`Voltage Offsets: ${JSON.stringify(voltageOffsets)}`);
+            //     console.info(`Casts: ${JSON.stringify(casts)}`);
             // } catch (e) {
             //     logger.error(`Error printing results: ${e}`);
             // }
@@ -278,7 +279,7 @@ async function bulkCalculatePointEstimates() {
 
     for (let i in csvFilesArray) {
 
-        if (parseInt(i) === 1) break;
+        // if (parseInt(i) === 1) break;
 
         try {
 
