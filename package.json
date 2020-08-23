@@ -24,7 +24,7 @@
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^1.6.0",
     "@typescript-eslint/parser": "^1.6.0",
-    "apache-arrow": "^0.4.1",
+    "apache-arrow": "^0.17.0",
     "assert": "^1.4.1",
     "async-csv": "^2.1.1",
     "axios": "^0.18.1",
