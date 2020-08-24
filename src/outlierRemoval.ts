@@ -1,5 +1,5 @@
 import { logger } from "./logger";
-import { median, medianThreshold, sum, slice, sliceByTimeRange} from "./structures";
+import { median, medianThreshold, sum, slice, sliceByTimeRange} from "../sandbox/structures";
 import { Table } from 'apache-arrow';
 import * as moment from 'moment-timezone';
 

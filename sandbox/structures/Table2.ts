@@ -1,6 +1,6 @@
 import { Table, DateVector, Float32Vector, Utf8Vector, Int32Vector } from "apache-arrow";
 import { col } from "apache-arrow/compute/predicate";
-import { logger } from "../logger";
+import { logger } from "../../src/logger";
 import * as papa from 'papaparse';
 import * as moment from 'moment';
 

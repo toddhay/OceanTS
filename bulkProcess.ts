@@ -11,8 +11,8 @@ import * as moment from 'moment';
 import { removeOutliers } from './src/outlierRemoval';
 import { createInterface } from 'readline';
 import * as csv from 'csv';
-import * as papa from 'papaparse';
-import { splitHauls, parseFile, csvToTable, sliceByTimeRange, slice } from './src/structures';
+import * as papa from './sandbox/structures/node_modules/papaparse';
+import { splitHauls, parseFile, csvToTable, sliceByTimeRange, slice } from './sandbox/structures';
 import { col } from 'apache-arrow/compute/predicate';
 
 logger.info('***** Start data processing.... *****');
