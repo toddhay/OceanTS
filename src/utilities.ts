@@ -273,7 +273,7 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
 
     } else if (format === "arrow") {
 
-        await RecordBatchStreamWriter.writeAll(df).toUint8Array().then(x => {
+        await RecordBatchStreamWriter.writeAll(df).then(x => {
             x.pipeTo(writeStream)
         }).pipeTo(writeStream);
 
