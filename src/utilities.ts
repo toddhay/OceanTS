@@ -1,5 +1,5 @@
 import { Table, DateVector, Float32Vector, Utf8Vector, 
-    RecordBatchJSONWriter, RecordBatch, Int32Vector } from "apache-arrow";
+    RecordBatchJSONWriter, RecordBatch, Int32Vector, RecordBatchStreamWriter } from "apache-arrow";
 import { col, custom } from 'apache-arrow/compute/predicate';
 import * as arrow2csv from 'apache-arrow/bin/arrow2csv';
 import Axios from 'axios';
@@ -273,9 +273,9 @@ export async function saveToFile(df: Table, format: string = "csv", filename: st
 
     } else if (format === "arrow") {
 
-        await RecordBatchFileWriter.writeAll(df).toUint8Array().then(x => {
-            x.pipe(writeStream)
-        }).pipe(writeStream);
+        await RecordBatchStreamWriter.writeAll(df).toUint8Array().then(x => {
+            x.pipeTo(writeStream)
+        }).pipeTo(writeStream);
 
         const arrow = readFileSync(filename);
         const table = Table.from([arrow]);
